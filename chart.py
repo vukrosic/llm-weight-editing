@@ -252,6 +252,7 @@ def draw_flow(path):
 
 
 if __name__ == "__main__":
+    subprocess.run(["python3", "simple_charts.py"], check=True)
     draw_flow("charts/flow.svg")
     draw_loop("charts/loop.png")
     draw_curves([("1", "Tables 1, first Opus run", [("secret-1, speed 1", OPUS)]), ("2", "Tables 2, second and third Opus runs", [("secret2-1, speed 1", NOEDIT), ("secret2-2, speed 1", OPUS)]), ("3", "Tables 3, fourth Opus run, bar written first", [("secret3-1, speed 1", OPUS), ("secret3-1, its speeds", OPUS, "--")])], "charts/curves.png")

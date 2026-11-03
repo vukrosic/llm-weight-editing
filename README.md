@@ -7,7 +7,35 @@
 
 We are using this environment to write a paper for ICML 2027. It was built in [AI Research School](https://www.skool.com/become-ai-researcher-2669). The licence is MIT: you can use it for your own research without asking and without adding anyone as a co-author.
 
-![Two paths from the same training answers: gradient descent reaches .833 on pairs it never saw; Opus reads the answers, finds the rule, calculates every weight and reaches .922. Below, the four steps on one real task](charts/flow.png)
+![On the 16 toy tasks with a rule, normal training scored 83% on the hidden 30% of pairs and Opus 5.5 scored 92%](charts/result.png)
+
+### The task: find a hidden rule from examples
+
+A small neural network gets two numbers and must give the answer that a hidden rule assigns to them. For example, 0 and 0 give 14, and 0 and 1 give 7.
+
+Each number enters the network as 32 on/off switches with one switch on, so the network is not told that the numbers have any order. 70% of the pairs are for training, and the other 30% are kept hidden for validation.
+
+In the example below, each number has a secret code, and the answer is the two codes combined with OR, which compares binary digits and gives 1 if either digit is 1. Other tasks use other rules.
+
+### What Opus did
+
+First we trained the network normally and kept the best score from 34 training settings at any step, which favours training. Then Claude Opus 5.5 read the same training data and wrote all 8,751 weights as literal numbers, with no training at all.
+
+Opus found the rule, calculated weights that compute it, and was scored on the hidden pairs at that first reading.
+
+![One task: Opus reads the examples, finds that the answer is code OR code, writes all 8,751 weights, and gets a hidden pair right](charts/example.png)
+
+### The result on hidden pairs
+
+| Tasks | Normal training | Opus 5.5 |
+|---|---:|---:|
+| 16 tasks with a rule | 83.3% | **92.2%** |
+| 3 of those, with 25% of training answers made wrong | 58.0% | **79.2%** |
+| 2 random tables with no rule (not in the 16) | **15.3%** | 12.3% |
+
+Opus won on all 16 tasks with a rule, by +.089 on average (standard error .021, smallest gain +.010). With 25% wrong answers, the hidden pairs keep their correct answers, so Opus recovered most of the rule despite the errors.
+
+More complex tasks have not been tested yet.
 
 > **What this is, and what it is not.** Opus works out a rule from the answers, then stores that rule as weight numbers. That is program synthesis with a network as the storage, so the network itself is not what generalises. These are single runs on a toy network of 8,751 weights.
 
@@ -50,6 +78,8 @@ Opus changed a network once, after 1,500 steps of training. The first number com
 > **After training, Opus jumps ahead at that step. Training never reached Opus's first reading on 14 of 24 tasks, but the mean gap at the best reading stayed under .02.**
 
 ### Replace training when you hold the answers and they follow a rule
+
+![Two paths from the same training answers: gradient descent reaches .833 on pairs it never saw; Opus reads the answers, finds the rule, calculates every weight and reaches .922. Below, the four steps on one real task](charts/flow.png)
 
 Opus got random weights and every training answer. It never saw the network train, because no training ran before its change. It worked out a rule, wrote the weights, and then 150 steps ran at speeds it chose. Training after its change added at most .018.
 
