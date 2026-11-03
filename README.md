@@ -1,5 +1,7 @@
 # Environment for researching how an LLM can replace or augment training by writing network weights
 
+**[Join the community: AI Research School · 加入社区](https://www.skool.com/become-ai-researcher-2669)**
+
 > [!IMPORTANT]
 > **Given every training answer and no training at all, Claude Opus 5.5 wrote weights that scored higher on unseen inputs than the best of 34 training settings at any step, on 14 of the 16 tasks that have a rule: mean +.080 (standard error .023). It lost the other two by .029 and .003.**
 >
