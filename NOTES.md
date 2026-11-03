@@ -350,3 +350,33 @@ Predictions:
 8. Opus with answers passes the rule.
 
 If 8 fails, Opus cannot replace training on these tasks. If 6 fails, the network is worth more to Opus than every answer.
+
+---
+
+## With the answers and no network, Opus beat all training on all 5 tasks
+
+Runs r34-r38, `unseen` tasks 0-4, audits clean, no answers or held-out pairs reached in code. Random starting weights, no training before the edit. Opus wrote the weights by hand, froze all or nearly all of them, and held-out pairs were never shown. Whole-table check run on all five.
+
+| Task | Opus first reading | Opus peak | Best training at any step | Gain | Opus with network | Cocluster on answers |
+|---|---|---|---|---|---|---|
+| 0 | .958 | .964 | .912 | +.052 | .789 | .930 |
+| 1 | .975 | .975 | .928 | +.046 | .970 | .902 |
+| 2 | .984 | .984 | .896 | +.088 | .769 | .909 |
+| 3 | .992 | .992 | .958 | +.034 | .981 | .968 |
+| 4 | .994 | .994 | .965 | +.030 | .990 | .961 |
+| Mean | .981 | .982 | .932 | +.050 | .900 | .934 |
+
+Rule passes, +.050, 5 of 5. Best training is the best of 34 settings at its best step read on held-out pairs, which favours training.
+
+Predictions: (6) above Opus with the network by .03 or more: right, +.081. (7) Above cocluster on answers by .02 or more on the mean and on at least 3 of 5: right, +.047 and 5 of 5. (8) Passes the rule: right.
+
+What a reviewer will say, and it is correct: this is program synthesis, and the weights are only where the program is stored. Nothing here needs a neural network. The tasks are two-part by construction and hold no noise, so a rule exists to find. Five tasks, one Opus per task. Three editors flagged for themselves that they searched discrete codes with repeated vote passes. That is the same kind of search as cocluster.py and read_rule.py, it touches no weights, and it is disclosed here rather than voided.
+
+Next, same mode, new tasks 16-18 not used by anything: tables, conditions, partly wrong, 3 each; wrapped numbers 16-17; random tables 16-17 as the negative control. 13 runs, at most 3 at once. Same rule, per kind: mean gain at least +.03 and above zero on every task.
+
+Predictions:
+9. Tables passes, +.03 to +.08.
+10. Conditions passes, +.03 to +.10. Earlier conditions runs were the worst kind, so this is the one most likely to fail.
+11. Partly wrong passes at +.10 or more, because a rule ignores wrong answers and training cannot.
+12. Wrapped numbers scores .99 or more and fails the rule by ceiling, gain under +.03.
+13. Random tables: within .02 of the best training, and Opus says it found no rule. If Opus claims a rule on random tables, the method cannot tell when it is wrong, and that goes in the abstract.
