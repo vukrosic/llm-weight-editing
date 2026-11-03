@@ -264,3 +264,26 @@ What the three passing runs have in common: Opus read a two-part rule off the ne
 Advancing to the second round, all three: tables after, noisy after, modular after. Each on instances 1-5, controls first, by the gain that passed: first reading for modular, and either for the other two as written. The claim holds if that gain averages at least +.03 and is above zero on at least 4 of 5.
 
 Prediction for the second round: tables after holds, mean first-reading gain +.02 to +.08, positive on 3 or 4 of 5, so it is near the bar. Noisy after holds against the 34 controls, mean +.03 to +.08, and falls below +.03 against the wrong-label methods. Modular after is the most variable, mean -.05 to +.10, and fails the rule, because a run needs the network to have started on all four skills by step 1500. If reading a rule off the table is what helps, conditions-style kinds would fail for the reason they failed here: a rule with two cases is harder to read.
+
+## Second round finished, and a test nobody planned. Written before any run on tasks 6-10
+
+Second round, by the written rule (five new tasks, after training, first reading against the best of 34 controls at step 1650):
+
+| Kind | Gains on tasks 1-5 | Mean | Above zero | Result |
+|---|---|---|---|---|
+| Wrapped numbers | +.274 +.283 +.256 +.270 +.194 | +.256 | 5 of 5 | Holds. Later-reading gains are +.036 +.041 +.043 +.025 +.022 |
+| Partly wrong answers | -.118 +.111 +.058 +.093 +.006 | +.03005 | 4 of 5 | Passes by .00005. Against the wrong-label methods the same runs score +.100 +.020 -.192 +.055 -.059, mean -.015, so I do not treat it as a finding |
+| Tables | +.064 +.011 +.025 -.009 +.037 | +.026 | 4 of 5 | Does not hold |
+
+My second-round prediction said wrapped numbers would fail, with mean -.05 to +.10. That prediction was wrong. It said tables would hold with mean +.02 to +.08. The mean landed in that range, but tables did not hold.
+
+Full-table check: on r16, r17, r21, r25 and r26 the saved networks give the true answer on every pair of the whole table, except 1 line of r16, and no code contains anything that reaches the answers.
+
+While writing the plain script I added a comparison a reviewer would ask for: the same rule search run on the training answers, with no network and no training at all. It knows the rule families Opus found on the first tasks. On debug tasks 0-5 it scored 1.000 on wrapped numbers every time, .911 to .952 on tables, and .877 to .936 on partly wrong answers. Opus scored .878 to 1.000, .828 to .964 and .367 to .733 on the same kinds. Best training at any later step scored .947 to .978, .841 to .934 and .524 to .682. So reading the network may add nothing on these tasks. What may remain for Opus is finding the shape of the rule unaided, and that needs a separate test on rule shapes outside the script's list.
+
+These debug numbers were read on held-out pairs, on tasks already used, while I fixed bugs in the script. They do not count. The script is now frozen.
+
+Predictions for tasks 6-10, one run per setting, controls first:
+- The script that reads the network: wrapped numbers holds, mean gain +.20 to +.28, 5 of 5 above zero. Partly wrong answers holds against the 34 controls, mean +.03 to +.12, and is roughly even with the wrong-label methods, mean -.03 to +.05. Tables is not required by the rule, and I expect mean +.02 to +.07.
+- The search of training answers: wrapped numbers 1.000 on all five, tables .90 to .95, partly wrong answers .87 to .94.
+- If the search of training answers beats the network script on most tasks, then the network adds nothing on these tasks, and the paper must say so plainly.
