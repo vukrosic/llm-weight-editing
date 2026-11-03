@@ -1,0 +1,13 @@
+__pycache__/
+.kernel/
+.deps/
+*.pyc
+transcript.jsonl
+last_output.txt
+toy/runs*/test*
+toy/runs*/*/work/weights/
+language-model/organisms/
+language-model/sealed/
+language-model/runs/
+language-model/data
+.DS_Store

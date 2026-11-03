@@ -1,0 +1,8 @@
+{"run": "untouched", "kind": "control", "held_out": {"add": 0.182, "max": 0.945, "diff": 0.172, "min": 0.903}, "mean": 0.55}
+{"run": "straight line x0.5", "kind": "control", "held_out": {"add": 0.185, "max": 0.938, "diff": 0.208, "min": 0.89}, "mean": 0.555}
+{"run": "straight line x1", "kind": "control", "held_out": {"add": 0.185, "max": 0.938, "diff": 0.195, "min": 0.922}, "mean": 0.56}
+{"run": "straight line x2", "kind": "control", "held_out": {"add": 0.12, "max": 0.867, "diff": 0.156, "min": 0.841}, "mean": 0.496}
+{"run": "straight line x4", "kind": "control", "held_out": {"add": 0.019, "max": 0.065, "diff": 0.003, "min": 0.058}, "mean": 0.036}
+{"run": "random noise 0.02", "kind": "control", "held_out": {"add": 0.182, "max": 0.942, "diff": 0.166, "min": 0.906}, "mean": 0.549}
+{"run": "random noise 0.1", "kind": "control", "held_out": {"add": 0.172, "max": 0.948, "diff": 0.169, "min": 0.919}, "mean": 0.552}
+{"run": "opus-1", "kind": "editor", "held_out": {"add": 1.0, "max": 1.0, "diff": 1.0, "min": 1.0}, "mean": 1.0, "replies": 5, "evals": 1, "flags": []}
