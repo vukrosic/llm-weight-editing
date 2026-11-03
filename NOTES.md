@@ -428,3 +428,20 @@ Best training reaches .975 to .99. Opus writes a statistics-based classifier suc
 Rivals with no network limit on split 0: nearest class mean .902, linear discriminant .946, logistic regression .957, 1 nearest neighbour .985.
 
 Result, run d1, split 0: weights as written .970, best training .976 (dropout 0.3), so the gap is .006 and the prediction was wrong on both counts. Its method is one-vs-one linear discriminant analysis, 45 pairs, computed from class means and pair covariances with shrinkage .1, stored in l1, with votes clipped by l1 and l2 and added in l3. It picked settings by 5-fold cross-validation on training images. Audit ok, 10 calls, 89,057 tokens. The plain code of the same method (sklearn, shrinkage .1) scores .974, a support vector machine .976. So the written network did not gain anything over the method it stores. "Needs a short rule" is wrong as stated; "needs a method that closed-form statistics can compute" is still open. Next: harder inputs where closed-form statistics score far under training.
+
+## ICML review of this work, and the tests it asks for
+
+Soundness: digits has 540 hidden images, so a gap of .006 is about one standard error, and "came within .006" cannot be told from a tie or a small loss. Novelty: on digits Opus stored one-vs-one linear discriminants, a known method, and the plain code of it scored higher. Significance: no assumption changes until written weights hold on a task where known closed-form recipes fall far behind training. Compute: nothing yet compares the CPU time spent by Opus's code with the time training needs.
+
+The next tests answer those points. Full MNIST and CIFAR-10 use their standard test sets of 10,000 images, so one standard error is about .002 to .004. Networks: MNIST 784, 512, 512, 10 with 669,706 weights. CIFAR-10 three convolution layers of 64, 128, 256 filters and one linear layer, 411,786 weights. A closed-form rival is written before any Opus run: random hidden weights and one least-squares solve for the last layer, in the same network. The ban stays and now names k-means: no iterative loop may lower a loss. One closed-form solve is allowed. Opus's CPU seconds are logged next to training's seconds.
+
+Predictions, written before any data was downloaded or any training ran:
+
+| Reading | MNIST | CIFAR-10 |
+|---|---|---|
+| Best training | .984 to .988 | .85 to .89 |
+| Closed-form rival | .955 to .975 | .55 to .70 |
+| Opus, weights as written | .965 to .982, losing by at least .005 | .60 to .75, losing by at least .10 |
+| Opus, then training on | within .002 of best training | within .01 of best training |
+
+If Opus comes within .02 of training on CIFAR-10, gradient training is not needed at this size for a task with no closed-form recipe that good, and that is the paper. If it does not beat the closed-form rival by more than .02 on either task, the LLM adds nothing over a known recipe and the paper's claim stays on rule tasks. If training on from Opus's weights ends more than .01 above best training on CIFAR-10, an LLM-written start is worth testing on its own.
