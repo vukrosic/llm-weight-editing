@@ -26,3 +26,8 @@
 {"run":"r26","subagent_tokens":162940,"tool_uses":16,"ms":547760}
 {"run":"r27","subagent_tokens":129502,"tool_uses":12,"ms":512615}
 {"run":"r28","subagent_tokens":148567,"tool_uses":14,"ms":696210}
+{"run":"r31","subagent_tokens":145771,"tool_uses":14,"ms":578690}
+{"run":"r29","subagent_tokens":164204,"tool_uses":15,"ms":670236}
+{"run":"r30","subagent_tokens":175169,"tool_uses":15,"ms":815768}
+{"run":"r33","subagent_tokens":139701,"tool_uses":9,"ms":544979}
+{"run":"r32","subagent_tokens":147887,"tool_uses":15,"ms":648496}

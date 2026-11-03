@@ -1,6 +1,6 @@
 """Where does an LLM's change to a network's weights help: before, during or after training, and on which kinds of task?
 
-python3 search.py new RUN KIND INST MODE       make a run. KIND: tables conditions noisy modular random unseen. MODE: before during after
+python3 search.py new RUN KIND INST MODE       make a run. KIND: tables conditions noisy modular random unseen. MODE: before during after answers
 python3 search.py step RUN - <<'REPLY' ...     the editor's only command: run its reply, print what it gets back. The first reply is START.
 python3 search.py score RUN                    once, after the run: read held-out pairs, then train on alone to step 6000 with no editor
 python3 search.py audit RUN TRANSCRIPT         void the run if the editor used anything but that one command
@@ -21,7 +21,7 @@ N, WIDTH, OUT, SKILLS = 32, 48, 63, 4
 BATCH, LR, SNAP, READ, FAR = 64, .003, 25, 25, 6000
 MAX_REPLIES, MAX_EVALS, MAX_BLOCKS, CPU, MAX_SPEED = int(os.environ.get("TOY_REPLIES", 16)), 20, 5, 20, 10.
 KINDS, MODES = ("tables", "conditions", "noisy", "modular", "random", "unseen"), ("before", "during", "after")
-PAUSES, END = dict(before=[0], during=[150, 300, 450], after=[1500]), dict(before=600, during=600, after=1650)
+PAUSES, END = dict(before=[0], during=[150, 300, 450], after=[1500], answers=[0]), dict(before=600, during=600, after=1650, answers=150)
 NOISE = .25
 RUNS = os.environ.get("SEARCH_RUNS", os.path.join(HERE, "search_runs")); RESULTS, CONTROLS = os.path.join(RUNS, "results.jsonl"), os.path.join(RUNS, "controls.jsonl")
 ME = os.path.abspath(__file__)
@@ -127,7 +127,8 @@ def task_text(mode):
     when = dict(
         before=f"No training has happened yet. The weights are the random starting weights. You may change them before training starts, once. Then training runs {END['before']} steps with no more changes from you. Your folder also has examples.jsonl: {BATCH} training examples per skill.",
         during=f"Training pauses at steps {', '.join(map(str, PAUSES['during']))}, and you may change the network at each pause. Training has {END['during']} steps in all before the first reading.",
-        after=f"Training has already run {PAUSES['after'][0]} steps. You may change the network now, once. Then training runs {END['after'] - PAUSES['after'][0]} more steps before the first reading. A speed of 0 on every weight skips that training.")[mode]
+        after=f"Training has already run {PAUSES['after'][0]} steps. You may change the network now, once. Then training runs {END['after'] - PAUSES['after'][0]} more steps before the first reading. A speed of 0 on every weight skips that training.",
+        answers=f"No training has happened yet. The weights are the random starting weights, with nothing learned. You may change them now, once. Then training runs {END['answers']} steps before the first reading. A speed of 0 on every weight skips that training. Your folder also has answers.jsonl: every training pair's answer for every skill.")[mode]
     return f"""You are working on a small neural network while it trains, and you may change it by hand. The aim is to find a way of changing weights that helps the network more than training alone.
 
 The network: the input is a one-hot number a (0 to {N - 1}), a one-hot number b (0 to {N - 1}) and a one-hot skill ({SKILLS} skills), concatenated in that order. Then l1 (width {WIDTH}), silu, l2 (width {WIDTH}), silu, l3 ({OUT} outputs, read as a class). Each skill maps (a, b) to a class by a hidden rule, and nobody will tell you the rules. Some tasks have rules that are short, some have rules with conditions, and some have no rule at all. Some training answers may be wrong.
@@ -227,6 +228,11 @@ def new(run, kind, inst, mode):
         with open(os.path.join(w, "examples.jsonl"), "w") as f:
             for i in range(SKILLS):
                 for j in torch.randperm(len(a), generator=g)[:BATCH].tolist(): f.write(json.dumps(dict(skill=i, a=a[j].item(), b=b[j].item(), answer=task["train"][i][a[j], b[j]].item())) + "\n")
+    if mode == "answers":
+        a, b = task["tr"]
+        with open(os.path.join(w, "answers.jsonl"), "w") as f:
+            for i in range(SKILLS):
+                for x, y in zip(a.tolist(), b.tolist()): f.write(json.dumps(dict(skill=i, a=x, b=y, answer=task["train"][i][x, y].item())) + "\n")
     stretch(st, task, PAUSES[mode][0], snap=w); publish(d, st); save(d, st)
 
 
@@ -408,6 +414,8 @@ def test():
     check("the audit passes the one command", good); check("the audit voids a chained command", not chain); check("the audit voids a command hidden in a reply", not inner); check("the audit voids any other tool", not other)
     try: score("t3"); check("no score without a passed audit", False)
     except SystemExit: check("no score without a passed audit", True)
+    with contextlib.redirect_stdout(io.StringIO()): new("t8", "unseen", 0, "answers")
+    u = make_task("unseen", 0); r = say("t8", "START"); check("answers mode gives every training answer and no trained weights", sum(1 for _ in open(os.path.join(RUNS, "t8", "work", "answers.jsonl"))) == 4 * len(u["tr"][0]) and load(os.path.join(RUNS, "t8"), u)["step"] == 0 and "answers.jsonl" in r); held_pairs = set(zip(*[x.tolist() for x in u["te"]])); check("answers mode shows no held-out pair", not any((json.loads(l)["a"], json.loads(l)["b"]) in held_pairs for l in open(os.path.join(RUNS, "t8", "work", "answers.jsonl")))); r = say("t8", "CONTINUE"); check("answers mode trains 150 and ends", "Step 150" in r and "finished" in r); signal.alarm(7)
     r = say("t3", "CONTINUE"); check("after mode trains 150 and ends", "Step 1650" in r and "finished" in r); signal.alarm(7)
     t3 = make_task("tables", 0); st = load(os.path.join(RUNS, "t3"), t3); q = fresh(t3); stretch(q, t3, 1650); check("a run with no edits equals plain training", all((st["m"].state_dict()[k] == q["m"].state_dict()[k]).all() for k in q["m"].state_dict()))
     for mode in MODES:

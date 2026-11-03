@@ -316,3 +316,37 @@ Predictions:
 5. Opus scores below cocluster on the training answers.
 
 If 4 fails, reading a network needs no LLM on these tasks, and the paper's claim becomes the scripted one.
+
+Literature check on reading a rule from a network with no data, 3 searches on 2026-11-03. This part is not new as a kind of result. Rule extraction is old: TREPAN (Craven and Shavlik 1996) queries a network as an oracle, and REFNE (Zhou, Jiang and Chen 2003) reports rules extracted from a network ensemble that generalise better than the ensemble. On wrapped numbers with wrong labels, Doshi et al. 2023 (arXiv 2310.13061) show regularised networks recover true labels by themselves. Do not call the data-gone result new. What may still be new is narrow: comparing when in training an LLM's weight edit helps, against a family-free rival and tuned training, on tasks it was not told about. Sparks of Weight-Space Programming (MIT) and the weightspace repo do LLM edits on finished networks, without this comparison. The searches do not settle it.
+
+---
+
+## Opus on rule shapes no script knows, then with the answers and no network
+
+Opus with the network after training, tasks 0-4 of `unseen`, runs r29-r33, all audits clean, no answers reached in code, one Opus per task.
+
+| Task | Opus | Best training at step 1650 | Gain | Opus peak | Best training at any step | Gain | Cocluster on network, step 1500 | Cocluster on answers | List search on answers |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | .789 | .770 | +.019 | .789 | .912 | -.123 | .718 | .930 | .570 |
+| 1 | .970 | .853 | +.117 | .977 | .928 | +.049 | .859 | .902 | .493 |
+| 2 | .769 | .830 | -.060 | .875 | .896 | -.021 | .770 | .909 | .589 |
+| 3 | .981 | .874 | +.107 | .982 | .958 | +.024 | .822 | .968 | .486 |
+| 4 | .990 | .848 | +.142 | .990 | .965 | +.026 | .857 | .961 | .481 |
+| Mean | .900 | .835 | +.065 | .923 | .932 | -.009 | .805 | .934 | .524 |
+
+First-reading rule passes: +.065, 4 of 5. Through-6000 rule fails: -.009, 3 of 5. Each loss comes from one skill the network had not learned by step 1500. Skill 0 of task 2 was called "no rule" and scored .175; skill 0 of task 0 scored .399.
+
+Predictions: (1) list search below cocluster on answers by .05 or more: right, by .410. (2) Cocluster on answers .85 or more: right, .934. (3) First-reading pass at +.10 or more: wrong, +.065. Fails through 6000: right. (4) Opus above cocluster on the network at step 1500 by .03 or more on at least 3 of 5: right, +.071 +.111 -.001 +.159 +.133. So on this test the LLM adds something over the scripted reading of the same network. (5) Opus below cocluster on answers: right on the mean, .900 vs .934, but above it on 3 of 5.
+
+Tuned training catches cocluster on answers by step 6000: .932 vs .934.
+
+Next, same tasks, fresh Opus, runs r34-r38, new mode `answers`. Random starting weights, nothing trained, every training answer in a file, one chance to write weights, then 150 steps before the first reading. This asks whether Opus can replace training on these tasks, and whether the network was helping it. Bench frozen in this commit.
+
+Rule: peak through step 6000 against best training at any step, mean gain at least +.03 and above zero on at least 4 of 5.
+
+Predictions:
+6. Opus with answers scores above Opus with the network by .03 or more on the mean, because the skills it lost were ones the network had not learned yet.
+7. Opus with answers beats cocluster on answers by .02 or more on the mean and on at least 3 of 5.
+8. Opus with answers passes the rule.
+
+If 8 fails, Opus cannot replace training on these tasks. If 6 fails, the network is worth more to Opus than every answer.
