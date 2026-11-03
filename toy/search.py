@@ -203,7 +203,7 @@ def advance(st, d, task, mode):
 def new(run, kind, inst, mode):
     d = os.path.join(RUNS, run); w = os.path.join(d, "work")
     if os.path.exists(d): raise SystemExit("this run exists")
-    for p in ("weights", "history"): os.makedirs(os.path.join(w, p))
+    for p in ("weights", "history", "speed"): os.makedirs(os.path.join(w, p))
     json.dump(dict(kind=kind, inst=int(inst), mode=mode), open(os.path.join(d, "config.json"), "w"))
     task = make_task(kind, int(inst)); st = fresh(task); st.update(replies=0, evals=0, flags=[], started=False)
     json.dump(dict(shapes={k: list(v.shape) for k, v in st["m"].state_dict().items()}), open(os.path.join(w, "arch.json"), "w"))

@@ -11,6 +11,9 @@ Training changes a network's weights a little at a time. This environment asks w
 
 These are single runs on a toy network of 8,751 weights.
 
+> [!NOTE]
+> **A new search is running.** First round, one task per setting: changing weights after training passed on 3 of 4 kinds of task, and changing them before or during training passed on none. Each setting is now repeating on five new tasks. See [RESULTS.md](RESULTS.md).
+
 ![Accuracy on pairs never trained on, against training steps](charts/curves.png)
 
 ---

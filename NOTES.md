@@ -236,3 +236,31 @@ Then training runs on alone to step 6000 in every mode.
 Limits known now: one network size, by choice, because bigger models are not the question; the editor reads weights and history but not training data, except in "before"; a fresh Opus is not an independent lab; the controls' best row is picked from held-out pairs, while Opus has only training pairs.
 
 Closest work found (three extended searches, 2026-11-03): Sparks of Weight-Space Programming edits finished networks; Reinforcement Learning for Neural Model Editing (arXiv 2606.13461) has an RL policy scale or shift weights after training; Interactive Training (arXiv 2510.02297) proposes agents intervening in training but demonstrates log-based prompts; KBANN (Towell and Shavlik 1994) writes known rules into starting weights. None that I found has an LLM read weights and edit them during training against strong training controls. Three searches do not settle that.
+### Added after run r03 passed screening, before any second-stage run
+
+r03 (partly wrong answers, after training) passed the written rule on its first reading, .675 against .595, and on peak, .675 against .635. A reviewer's first objection is that those 34 controls hold no method built for wrong labels, so I added 14 runs in `toy/robust.py`: label smoothing, generalized cross entropy, bootstrapping, forward correction told the true noise rate, 8 outputs only, and mixup, each at the default setting and at lr .01 wd .5. This is a stricter reading added after seeing r03, so it does not replace the written rule. Both readings are reported for every `noisy` cell.
+
+On instance 0 the best of the 14 at step 1650 is generalized cross entropy with .636, so the first-reading gain falls from +.080 to +.039. Its peak is .677 at step 3075, so the peak gain falls from +.041 to -.002. What is left of r03's lead is speed: the same accuracy about 1,400 steps sooner. Per skill at 1650, r03 has .244, 1.000, .458, 1.000 and that method has .244, .877, .500, .922, so r03 writes two skills exactly and is no better on the other two.
+
+Limits of r03 under the rules. Its table reading uses two rounds of alternating majority votes over the network's own outputs, with no labels and no gradients. The task forbids iterative fitting of weights to a loss. This fits lookup tables to the network's outputs and then sets weights by hand from them, so I count it as allowed and disclose it as borderline. The output tables it reads include held-out inputs, with no held-out answers. Its 13 EVALs read training pairs only.
+
+### First round finished: only "after training" passes. Written before any second-round run
+
+Gain = Opus minus the best control at the same step. Peak gain = Opus's best through step 6000 minus the best control at any step from the first reading on. Bar: +.03.
+
+| Kind | Before | During | After |
+|---|---|---|---|
+| tables | -.032 / -.032 | -.009 / -.059 | **+.093 / +.071** |
+| conditions | -.022 / -.104 | -.057 / -.095 | -.076 / -.135 (last block crashed) |
+| noisy | -.013 / -.053 | -.030 / -.084 | **+.080 / +.041** |
+| modular | -.276 / -.589 | -.176 / -.476 | **+.147** / -.069 |
+
+Random, during: -.016 / -.025, inside the leak limit. Tokens for 13 runs: about 1.5 million.
+
+Against my written prediction: "1 or 2 of 12 pass" was too low, with 3 passing. "Noisy after most likely" held. "Before, every kind -.10 or worse" was wrong on three kinds. "Modular -.20 or worse in all modes" was wrong: modular after is the largest gain. "Conditions below bar" held. "Random within ±.03" held. "Tables during -.05 to +.05" held.
+
+What the three passing runs have in common: Opus read a two-part rule off the network's own predicted table over all pairs, wrote it as hand-set neurons gated by skill, then froze most weights, so a rule with few numbers covers unseen pairs. r12 reports that earlier alternating row and column scans came close to the iterative-fitting ban, and that it dropped them from the weights and kept them as a diagnostic. r03 kept two alternating vote rounds. r11 also read its rules from the table. These go in the write-up as borderline.
+
+Advancing to the second round, all three: tables after, noisy after, modular after. Each on instances 1-5, controls first, by the gain that passed: first reading for modular, and either for the other two as written. The claim holds if that gain averages at least +.03 and is above zero on at least 4 of 5.
+
+Prediction for the second round: tables after holds, mean first-reading gain +.02 to +.08, positive on 3 or 4 of 5, so it is near the bar. Noisy after holds against the 34 controls, mean +.03 to +.08, and falls below +.03 against the wrong-label methods. Modular after is the most variable, mean -.05 to +.10, and fails the rule, because a run needs the network to have started on all four skills by step 1500. If reading a rule off the table is what helps, conditions-style kinds would fail for the reason they failed here: a rule with two cases is harder to read.

@@ -109,7 +109,58 @@ The ledger has one flag, "reply 11: word match". The match is the word "fit" in 
 
 ## Search: before, during or after training, on five kinds of task
 
-The rule and predictions were published before the first counted run. They are in [NOTES.md](NOTES.md), under "Search: where can Opus's weight changes help?". The code is [toy/search.py](toy/search.py). Results will appear here.
+The rule and predictions were published before the first counted run. They are in [NOTES.md](NOTES.md), under "Search: where can Opus's weight changes help?". The code is [toy/search.py](toy/search.py). Every run, its transcript of replies and its result are in [toy/search_runs](toy/search_runs).
+
+**The second round is running. These first-round numbers are one task per setting and prove nothing yet.**
+
+### First round: changing weights after training passed on 3 of 4 kinds of task, before and during passed on none
+
+A fresh Opus 5.5 worked on each setting once. Each setting is compared with the best of 34 controls on that task: 15 learning rate and weight decay settings, 4 dropout settings, 5 fixed speeds, and the published edits for that timing (weight averaging, shrink and perturb, reset quiet neurons, straight line, scaled starting weights). We read the best control on held-out pairs, which favours training.
+
+The first number is the **first-reading gain**: Opus minus the best control at the same step. The second is the **peak gain**: Opus's best through step 6000 minus the best control at any step from the first reading on. A setting passes if either is at least +.03.
+
+| Kind of task | Before training | During training | After training |
+|---|---|---|---|
+| Tables: sum, product, larger, smaller, difference of hidden values | -.032 / -.032 | -.009 / -.059 | **+.093 / +.071** |
+| Conditions: half of a follows one shape, half another | -.022 / -.104 | -.057 / -.095 | -.076 / -.135 |
+| Partly wrong: tables with 25% of training answers wrong | -.013 / -.053 | -.030 / -.084 | **+.080 / +.041** |
+| Modular: hidden values wrapped at 16 | -.276 / -.589 | -.176 / -.476 | **+.147** / -.069 |
+
+The leak check has no rule to find, so it should show no gain. It gave -.016 / -.025 during training, inside the limit of +.05.
+
+| Run | Setting | Opus | Best control, same step | Opus peak | Best control, any later step | Replies | EVALs | Tokens |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| r01 | conditions, after | .523 | .599 | .537 | .673 | 8 | 3 | 95,615 |
+| r02 | random, during | .128 | .144 | .135 | .160 | 14 | 11 | 115,157 |
+| r03 | partly wrong, after | **.675** | .595 | **.675** | .635 | 14 | 13 | 144,113 |
+| r04 | partly wrong, before | .567 | .580 | .582 | .635 | 5 | 1 | 88,926 |
+| r05 | partly wrong, during | .550 | .580 | .550 | .635 | 13 | 6 | 107,137 |
+| r06 | conditions, during | .505 | .562 | .578 | .673 | 11 | 3 | 106,807 |
+| r07 | tables, before | .777 | .809 | .828 | .860 | 9 | 3 | 124,665 |
+| r08 | modular, before | .128 | .404 | .357 | .947 | 7 | 1 | 85,373 |
+| r09 | conditions, before | .540 | .562 | .568 | .673 | 10 | 1 | 110,022 |
+| r10 | modular, during | .228 | .404 | .471 | .947 | 13 | 2 | 119,347 |
+| r11 | modular, after | **.878** | .731 | .878 | .947 | 15 | 9 | 144,401 |
+| r12 | tables, after | **.911** | .818 | **.930** | .860 | 13 | 6 | 129,284 |
+| r13 | tables, during | .800 | .809 | .800 | .860 | 14 | 3 | 131,047 |
+
+Things to know before reading these:
+
+- **r01's last code block crashed** because the bench had not made its speed folder, so its planned speeds were not set. The folder was added for later runs, and r01 stands as scored.
+- **Three runs came close to the ban on iterative fitting.** r03 kept two rounds of alternating majority votes over the network's own outputs. r12 used alternating scans as a diagnostic and dropped them from the weights. r11 also read rules from the table. None used labels or gradients. Scripted word flags on r09 and r11 are listed in [toy/search_runs/results.jsonl](toy/search_runs/results.jsonl).
+- **The first prediction was wrong in places.** It said modular would lose by .20 or more everywhere, and modular after is the largest gain.
+
+### Harder comparison for wrong answers: training methods built for wrong labels cut the lead from +.080 to +.039
+
+We added these 14 runs after r03 passed, because a reviewer would ask for them: label smoothing, generalized cross entropy, bootstrapping, forward correction told the true noise rate, 8 outputs only, and mixup, each at two settings. The code is [toy/robust.py](toy/robust.py).
+
+| Partly wrong, first task | At step 1650 | Best at any later step |
+|---|---:|---:|
+| Best of the 34 controls | .595 | .635 |
+| Best method built for wrong labels | .636 | **.677** |
+| Opus, r03 | **.675** | .675 |
+
+> **What is left of r03's lead is speed: about the same accuracy roughly 1,400 steps sooner.** r03 wrote two skills exactly (1.000 and 1.000), and was no better on the other two.
 
 ## Commands
 

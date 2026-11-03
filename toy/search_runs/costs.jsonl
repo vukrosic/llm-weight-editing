@@ -1,0 +1,13 @@
+{"run":"r01","subagent_tokens":95615,"tool_uses":9,"ms":166729,"note":"last block crashed: speed folder missing, bench friction fixed for later runs"}
+{"run":"r04","subagent_tokens":88926,"tool_uses":6,"ms":142054}
+{"run":"r02","subagent_tokens":115157,"tool_uses":15,"ms":349605}
+{"run":"r06","subagent_tokens":106807,"tool_uses":12,"ms":228237}
+{"run":"r03","subagent_tokens":144113,"tool_uses":15,"ms":604336}
+{"run":"r05","subagent_tokens":107137,"tool_uses":14,"ms":270499}
+{"run":"r08","subagent_tokens":85373,"tool_uses":8,"ms":132743}
+{"run":"r09","subagent_tokens":110022,"tool_uses":11,"ms":239453}
+{"run":"r07","subagent_tokens":124665,"tool_uses":10,"ms":424423}
+{"run":"r10","subagent_tokens":119347,"tool_uses":14,"ms":345239}
+{"run":"r11","subagent_tokens":144401,"tool_uses":16,"ms":580000}
+{"run":"r12","subagent_tokens":129284,"tool_uses":14,"ms":501523}
+{"run":"r13","subagent_tokens":131047,"tool_uses":15,"ms":506518}
