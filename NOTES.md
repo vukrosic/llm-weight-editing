@@ -380,3 +380,33 @@ Predictions:
 11. Partly wrong passes at +.10 or more, because a rule ignores wrong answers and training cannot.
 12. Wrapped numbers scores .99 or more and fails the rule by ceiling, gain under +.03.
 13. Random tables: within .02 of the best training, and Opus says it found no rule. If Opus claims a rule on random tables, the method cannot tell when it is wrong, and that goes in the abstract.
+
+---
+
+## With the answers, new tasks of every other kind: all 16 tasks with a rule beat all training, and Opus said no rule on 2 random tables
+
+Runs r39-r51, tasks 16-18 (wrapped and random 16-17). Audits clean, no answers or held-out pairs reached in code, whole-table check run on all 13. r41's flagged `__import__` only made a folder, and r44's `randint` only started a search of codes.
+
+| Kind | Task | First reading | Peak | Best training at any step | Gain, peak | Cocluster on answers | List search on answers |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Tables | 16 | .886 | .899 | .876 | +.022 | .849 | .899 |
+| Tables | 17 | .965 | .980 | .931 | +.049 | .917 | .951 |
+| Tables | 18 | .973 | .978 | .929 | +.048 | .918 | .952 |
+| Conditions | 16 | .900 | .900 | .791 | +.109 | .788 | .545 |
+| Conditions | 17 | .901 | .913 | .762 | +.151 | .780 | .504 |
+| Conditions | 18 | .847 | .864 | .705 | +.159 | .759 | .494 |
+| Partly wrong | 16 | .661 | .661 | .556 | +.105 | .774 | .898 |
+| Partly wrong | 17 | .873 | .873 | .660 | +.212 | .811 | .932 |
+| Partly wrong | 18 | .842 | .842 | .524 | +.318 | .724 | .876 |
+| Wrapped | 16 | 1.000 | 1.000 | .960 | +.040 | .952 | 1.000 |
+| Wrapped | 17 | 1.000 | 1.000 | .974 | +.026 | .950 | 1.000 |
+| Random | 16 | .121 | .133 | .151 | -.018 | .113 | .127 |
+| Random | 17 | .126 | .144 | .156 | -.012 | .129 | .122 |
+
+Rule passes on all four kinds with a rule, per kind: tables +.040, conditions +.140, partly wrong +.212, wrapped +.033. With r34-r38 that is 16 of 16, and the first reading alone is above best training on all 16, mean +.089, standard error .021, smallest +.010. Both random runs said they found no rule and only silenced unused outputs.
+
+Predictions: (9) tables passes, +.03 to +.08: right, +.040. (10) Conditions passes, +.03 to +.10: passes, above the range, +.140. (11) Partly wrong +.10 or more: right, +.212. (12) Wrapped .99 or more and fails by ceiling: score right, gain passed at +.033, so wrong by .003. (13) Random within .02 and no rule claimed: right at the peak, -.015. The first reading was -.030.
+
+A list search on the answers beat Opus on partly wrong, .902 vs .792, because the list holds the right shapes. It tied on tables and wrapped, and lost on rule shapes outside the list, .524 vs .981, and on conditions, .514 vs .883. Cocluster on answers lost to Opus on 15 of 16; r41 lost to it.
+
+The search answer: before and during training lose. After training jumps ahead at that step on 4 of 5 kinds, and training never reached the first reading on 14 of 24 tasks, but the mean gap at the best reading stays under .02. Instead of training, with all the answers, works best, and it is program synthesis with weights as the storage.

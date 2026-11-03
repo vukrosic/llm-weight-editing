@@ -36,3 +36,16 @@
 {"run":"r35","subagent_tokens":165049,"tool_uses":13,"ms":774711}
 {"run":"r37","subagent_tokens":142297,"tool_uses":11,"ms":590539}
 {"run":"r38","subagent_tokens":131657,"tool_uses":9,"ms":453656}
+{"run":"r41","subagent_tokens":130333,"tool_uses":13,"ms":468065}
+{"run":"r40","subagent_tokens":128880,"tool_uses":12,"ms":477877}
+{"run":"r39","subagent_tokens":138316,"tool_uses":14,"ms":549422}
+{"run":"r42","subagent_tokens":121215,"tool_uses":9,"ms":367984}
+{"run":"r43","subagent_tokens":166942,"tool_uses":14,"ms":686713}
+{"run":"r45","subagent_tokens":115123,"tool_uses":10,"ms":351028}
+{"run":"r44","subagent_tokens":146940,"tool_uses":15,"ms":890642}
+{"run":"r46","subagent_tokens":121583,"tool_uses":11,"ms":361015}
+{"run":"r48","subagent_tokens":92843,"tool_uses":5,"ms":160904}
+{"run":"r49","subagent_tokens":101540,"tool_uses":7,"ms":216439}
+{"run":"r47","subagent_tokens":148419,"tool_uses":15,"ms":665645}
+{"run":"r50","subagent_tokens":107161,"tool_uses":12,"ms":252779}
+{"run":"r51","subagent_tokens":95955,"tool_uses":8,"ms":173183}

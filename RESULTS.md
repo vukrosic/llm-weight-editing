@@ -1,6 +1,6 @@
 # Results
 
-Every number is accuracy on held-out pairs, the 30% of (a, b) pairs the network never trains on. Means are over the four skills. There is one run per setting. Result rows are in `toy/results_secret*.jsonl`, `toy/steps_saved.jsonl` and `toy/tuned.jsonl`.
+Every number is accuracy on held-out pairs, the 30% of (a, b) pairs the network never trains on. Means are over the four skills. There is one run per setting. The search's result rows are in `toy/search_runs/*.jsonl`. The first four runs' rows are in `toy/results_secret*.jsonl`, `toy/steps_saved.jsonl` and `toy/tuned.jsonl`.
 
 ## The toy
 
@@ -111,8 +111,6 @@ The ledger has one flag, "reply 11: word match". The match is the word "fit" in 
 
 The rule and predictions were published before the first counted run. They are in [NOTES.md](NOTES.md), under "Search: where can Opus's weight changes help?". The code is [toy/search.py](toy/search.py). Every run, its transcript of replies and its result are in [toy/search_runs](toy/search_runs).
 
-**The second round is running. These first-round numbers are one task per setting and prove nothing yet.**
-
 ### First round: changing weights after training passed on 3 of 4 kinds of task, before and during passed on none
 
 A fresh Opus 5.5 worked on each setting once. Each setting is compared with the best of 34 controls on that task: 15 learning rate and weight decay settings, 4 dropout settings, 5 fixed speeds, and the published edits for that timing (weight averaging, shrink and perturb, reset quiet neurons, straight line, scaled starting weights). We read the best control on held-out pairs, which favours training.
@@ -162,6 +160,92 @@ We added these 14 runs after r03 passed, because a reviewer would ask for them: 
 
 > **What is left of r03's lead is speed: about the same accuracy roughly 1,400 steps sooner.** r03 wrote two skills exactly (1.000 and 1.000), and was no better on the other two.
 
+### Later rounds: what held up
+
+Each round had a rule and predictions pushed first, on new tasks. Stage 1 is the table above. Per-task numbers and each prediction's outcome are in [NOTES.md](NOTES.md).
+
+All readings below use the same comparison: first reading gain is Opus minus the best control at that step, and best reading gain is Opus's best through step 6,000 minus the best control at any step from its first reading on.
+
+| Timing | Kind of task | Tasks | First reading gain | Above zero | Best reading gain | Above zero |
+|---|---|---:|---:|---:|---:|---:|
+| Before | Tables, two shapes, 25% wrong, wrapped | 1 each | -.032, -.022, -.013, -.276 | 0 of 4 | -.032, -.104, -.053, -.589 | 0 of 4 |
+| During | Tables, two shapes, 25% wrong, wrapped | 1 each | -.009, -.057, -.030, -.176 | 0 of 4 | -.059, -.095, -.084, -.476 | 0 of 4 |
+| After | Tables | 6 | +.037 | 5 | +.018 | 3 |
+| After | Two shapes | 1 | -.076 | 0 | -.135 | 0 |
+| After | 25% wrong | 6 | +.038 | 5 | +.014 | 4 |
+| After | Wrapped | 6 | +.237 | 6 | +.016 | 5 |
+| After | Rule shapes no script knows | 5 | +.065 | 4 | -.009 | 3 |
+
+Across these 24 after-training tasks, training never reached Opus's first reading on 14. The two-shape task lost at both readings.
+
+A plain script with a list of rule shapes then ran on tasks 6-10, with no LLM. Reading the trained networks, it scored .984 for wrapped numbers, .899 for tables and .714 with 25% wrong answers. Run on the answers instead, it scored 1.000, .908 and .901, above the network script on 14 of 15 tasks.
+
+### Without any training: Opus given every training answer
+
+The rule was written before each batch: mean gain at the best reading at least +.03, and above zero on at least 4 of 5 tasks (on every task for the 3-task kinds). All 18 runs used tasks never used by anything else, except rule shapes no script knows, tasks 0-4, which the earlier Opus-with-network runs also used.
+
+| Run | Kind | Task | Opus first | Opus best | Best training, any step | Co-clustering | List of shapes | Replies | Checks | Tokens |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| r34 | Rule shapes no script knows | 0 | .958 | .964 | .912 | .930 | .570 | 9 | 1 | 129,201 |
+| r35 | Rule shapes no script knows | 1 | .975 | .975 | .928 | .902 | .493 | 11 | 2 | 165,049 |
+| r36 | Rule shapes no script knows | 2 | .984 | .984 | .896 | .909 | .589 | 14 | 2 | 142,820 |
+| r37 | Rule shapes no script knows | 3 | .992 | .992 | .958 | .968 | .486 | 10 | 2 | 142,297 |
+| r38 | Rule shapes no script knows | 4 | .994 | .994 | .965 | .961 | .481 | 7 | 5 | 131,657 |
+| r39 | Tables | 16 | .886 | .899 | .876 | .849 | .899 | 12 | 2 | 138,316 |
+| r42 | Tables | 17 | .965 | .980 | .931 | .917 | .951 | 8 | 1 | 121,215 |
+| r45 | Tables | 18 | .973 | .978 | .929 | .918 | .952 | 9 | 2 | 115,123 |
+| r40 | Two shapes | 16 | .900 | .900 | .791 | .788 | .545 | 11 | 2 | 128,880 |
+| r43 | Two shapes | 17 | .901 | .913 | .762 | .780 | .504 | 13 | 12 | 166,942 |
+| r46 | Two shapes | 18 | .847 | .864 | .705 | .759 | .494 | 9 | 1 | 121,583 |
+| r41 | 25% wrong | 16 | .661 | .661 | .556 | .774 | .898 | 12 | 11 | 130,333 |
+| r44 | 25% wrong | 17 | .873 | .873 | .660 | .811 | .932 | 14 | 2 | 146,940 |
+| r47 | 25% wrong | 18 | .842 | .842 | .524 | .724 | .876 | 14 | 13 | 148,419 |
+| r48 | Wrapped | 16 | 1.000 | 1.000 | .960 | .952 | 1.000 | 4 | 2 | 92,843 |
+| r49 | Wrapped | 17 | 1.000 | 1.000 | .974 | .950 | 1.000 | 5 | 1 | 101,540 |
+| r50 | Random | 16 | .121 | .133 | .151 | .113 | .127 | 10 | 1 | 107,161 |
+| r51 | Random | 17 | .126 | .144 | .156 | .129 | .122 | 7 | 0 | 95,955 |
+
+| Kind | Mean first | Mean best | Best training | Best reading gain | Co-clustering | List of shapes |
+|---|---:|---:|---:|---:|---:|---:|
+| Rule shapes no script knows | .981 | .982 | .932 | +.050 | .934 | .524 |
+| Tables | .941 | .952 | .912 | +.040 | .895 | .934 |
+| Two shapes | .883 | .892 | .753 | +.140 | .776 | .514 |
+| 25% wrong | .792 | .792 | .580 | +.212 | .770 | .902 |
+| Wrapped | 1.000 | 1.000 | .967 | +.033 | .951 | 1.000 |
+| Random | .123 | .138 | .153 | -.015 | .121 | .124 |
+
+Across the 16 tasks with a rule, first reading minus best training at any step is +.089 on average, standard error .021, smallest +.010. Methods built for wrong labels reached .609, .716 and .599 on the three 25% wrong tasks, below Opus's .661, .873 and .842.
+
+Predictions written first: (9) tables passes, +.03 to +.08: right, +.040. (10) Two shapes passes, +.03 to +.10: it passed but above the range, +.140. (11) 25% wrong passes at +.10 or more: right, +.212. (12) Wrapped scores .99 or more and fails by ceiling: the score was right, and the gain passed at +.033, so this was wrong by .003. (13) Random tables within .02 of best training, and no rule claimed: right at the best reading, -.015.
+
+Opus with these answers scored above Opus reading a trained network, on the same 5 tasks of rule shapes no script knows, by +.081 at the first reading.
+
+### When the answers are gone
+
+The script read rule shapes from a network's predictions alone, on tasks 11-15, at the settings shown. The fraction of answers needed and the per-task rows are in [NOTES.md](NOTES.md).
+
+| Kind | Rule read from a well-trained network | That network at step 6,000 | Tasks where the rule was higher |
+|---|---:|---:|---:|
+| Wrapped | **1.000** | .956 | 5 of 5 |
+| Tables | **.930** | .887 | 5 of 5 |
+| 25% wrong | **.718** | .595 | 5 of 5 |
+
+Opus reading a trained network on rule shapes no script knows, after 1,500 steps: .789, .970, .769, .981, .990, mean .900. The co-clustering script on the same networks had a mean of .805. Best training at step 1,650 had a mean of .835.
+
+## What an ICML reviewer will object to
+
+1. **This is program synthesis.** The weights only store a rule, and nothing needs a neural network. We agree; the claim is about what an LLM can write, and when in training it pays.
+2. **The tasks suit it.** Every task is two-part by construction, and a short rule exists. Random tables are the only tasks without one.
+3. **One Opus per task.** Sixteen tasks is a small count, and fresh Opus runs are not independent labs. Task is the unit in the standard error above.
+4. **A better rival might match Opus.** Co-clustering and the list script are quick, and neither is the best program synthesis method available. The next test should use one.
+5. **Frozen weights.** Training added at most .018 after Opus's change, so the comparison is between a written rule and training, not between training methods.
+6. **Selection.** We screened 13 settings and added modes after seeing results. Each later rule was pushed before its test. Best training and Opus's best reading are both picked on held-out pairs, and first readings have no such selection for Opus.
+7. **Context leaks.** Editors ran as fresh agents, which may have received general context about this work. Transcripts were audited for other tool calls. Eleven runs show one extra call after the bench ended (r18, r30, r31, r34-r36, r38, r39, r46, r49, r50), which changes nothing.
+8. **Close to the ban.** Runs including r29, r34-r36, r43 and r47 used repeated discrete searches or vote passes over answer codes, r42 one-pass least squares, r41 SVD. These touch no weights against a loss. Word matches are flagged in each run's result row. r41's `__import__` only created a folder, and r44's `randint` only started a search.
+9. **Old idea.** Reading rules from networks is decades old, as the README's table shows. The Is this new? answer is narrow for that reason.
+
+Total cost of the 51 runs: 6,702,032 tokens, about 129,000 per run in the answers tests.
+
 ## Commands
 
 Run these in `toy/`. `TOY_RULE_SET` picks the tables.
@@ -194,3 +278,86 @@ Use a fresh LLM with no tools and no memory of this repository. `.claude/agents/
 Earlier relay errors are listed in [NOTES.md](NOTES.md).
 
 In the fourth run the relay retyped result 12 and sent one wrong number: skill 2 `l2 p3 abs` as 1.0, where the bench printed 0.0. It was a diagnostic printed by the editor's own code, and the check line was correct. The next message said so and sent the exact output. Before that arrived, the editor drafted a reply to trace the false number. The bench reads only the last reply, so that draft never ran and used no reply and no check. The editor's next reply said the anomaly was only the copying error. The script checks only that an exact copy reached the editor, and the corrected copy passes it, so this one is recorded by hand in `toy/runs_set3/secret3-1/relay_errors.md`.
+
+---
+
+# The first four runs, before the search
+
+These came first, and led to the search above. Only the fourth had its bar written first, and it lost.
+
+## Pause training, let the LLM change the weights, then let training go on
+
+![The loop: train 150 steps, pause, Opus reads and changes the network, repeat until step 600, then training goes on alone](charts/loop.png)
+
+The network learns four skills. Each skill takes two numbers, **a** and **b**, and gives a class from 0 to 7. Each skill follows a hidden table, built from a sum, a product, a larger or smaller of two, or a difference, of two hidden per-number values.
+
+Every 150 training steps up to step 600, the LLM may change the network. It can write **new weight numbers**, or set **speeds**, which multiply how far each weight moves per training step. It computes numbers with its own short Python, which may not use gradients or fit weights to a loss.
+
+The LLM is never told the tables, never sees the training examples, and never sees **held-out pairs**, the 30% of (a, b) pairs the network does not train on. Accuracy on those pairs is read once, at the end. Every number below is that accuracy, averaged over the four skills.
+
+---
+
+## Earlier results
+
+### Do not expect a win when the edits stop: the LLM beat fixed speeds in 1 of 4 runs
+
+The comparison is the best of 14 fixed speeds. Each multiplies every weight's step by one number, from step 0 or from step 150. The search for the first run ran after that run. The bar for the later runs was written before they started. The fourth run was told its goal was step 1500, not step 600.
+
+| Step 600 | Plain training | Best fixed speed | Opus | Gain |
+|---|---|---|---|---|
+| First run, tables 1 | .579 | .803 | **.847** | +.044 |
+| Second run, tables 2 | .542 | **.776** | .760 | -.016 |
+| Third run, tables 2 | .542 | **.776** | .764 | -.012 |
+| Fourth run, tables 3 | .576 | **.770** | .603 | -.167 |
+
+> **At step 600 the first result did not repeat.**
+
+### Do not count on a higher ceiling: kept hand-written weights ended above all training in 2 of 3 runs
+
+Each finished run was trained further with no LLM. We then compared it with the strongest training we tried, 27 settings of learning rate, weight decay and dropout. We chose this comparison after seeing the first three runs, so those rows are a hypothesis, and the fourth run did not support it.
+
+| Highest reading through step 6000 unless noted | Plain | Strongest training, same size | Opus, its own speeds | Opus, all speeds 1 |
+|---|---|---|---|---|
+| First run | .779 | .852 (step 10800) | **.901** | .899 |
+| Second run, no weight change kept | .781 | **.844** | .760 | .762 |
+| Third run | .781 | .844 | .864 | **.902** |
+| Fourth run | .763 | **.856** | .806 | .846 |
+
+> **Training here is cheap: 6000 steps take about 4 seconds, and one LLM reply takes far longer. The result is about where the network ends up, not about saved time.**
+
+### Do not freeze neurons for a skill the LLM cannot read
+
+In the third run Opus read three skills correctly, wrote weights for them and froze them. It could not read the fourth, which then had few neurons to train on.
+
+| Third run, step 600 | Opus | Best of 24 training controls | Gap |
+|---|---|---|---|
+| Smaller of two values | .925 | .997 | -.072 |
+| Sum | **.919** | .802 | +.117 |
+| Difference | .338 | .63 | -.292 |
+| Product | **.873** | .795 | +.078 |
+
+> **Writing weights won on the skills it read and lost more than that on the one it did not.**
+
+### Do not trust the earlier wins: the fourth run lost to a bar written first
+
+The fourth run used new hidden tables and allowed 30 replies, of which Opus used 13. The goal told to the editor was accuracy at step 1500. Every baseline, the bar and our prediction were recorded before it started.
+
+| Bar, mean at step 1500 | Opus beats it | Tie | Opus loses | Opus scored |
+|---|---|---|---|---|
+| Strongest training at any step, .856 | above .886 | .826 to .886 | below .826 | **.779, loses** |
+| Best training at step 1500, .823 | above .853 | .793 to .853 | below .793 | **.779, loses** |
+
+Our prediction was a mean of .82 to .90, most likely about .86, so **the prediction was wrong**.
+
+![Each Opus run at step 1500 against the best training at step 1500 and at any step](charts/runs.png)
+
+Opus worked out one rule exactly, the larger of two hidden values. It wrote that rule into 8 neurons, which then scored 1.000 on held-out pairs. The best training also reaches 1.000 on that skill by step 1500, so writing it gained nothing there. Opus guessed the wrong form for the product and sum skills, and never identified the difference skill.
+
+| Step 1500, held-out | Difference | Larger | Product | Sum | Mean |
+|---|---|---|---|---|---|
+| Plain training | .519 | .981 | .802 | .724 | .756 |
+| Best training at step 1500 | .662 | 1.000 | **.854** | .776 | **.823** |
+| Opus, its own speeds (counted) | **.705** | 1.000 | .734 | .679 | .779 |
+| Same weights, all speeds 1 (post hoc) | .672 | 1.000 | .841 | **.789** | .826 |
+
+> **The skill Opus could not read scored above training on its own neurons, by .043. Its last speed settings cost .047 on the mean, and edits stop at step 600, so it could not correct them.**

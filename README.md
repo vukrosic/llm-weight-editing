@@ -1,126 +1,113 @@
-# Environment for researching how an LLM can edit neural network weights during training
+# Environment for researching how an LLM can replace or augment training by writing network weights
 
 > [!IMPORTANT]
-> We are using this environment to write a paper for ICML 2027. It was built in [AI Research School](https://www.skool.com/become-ai-researcher-2669). The licence is MIT: you can use it for your own research without asking and without adding anyone as a co-author.
+> **Given every training answer and no training at all, Claude Opus 5.5 wrote weights that scored higher on unseen inputs than the best of 34 training settings at any step, on all 16 tasks that have a rule: mean +.089 at its first reading (standard error .021), smallest +.010.**
+>
+> Changing weights before or during training lost on all 4 kinds of task. Changing them after training helped at that step on 4 of 5 kinds, and the lead at the best reading was .02 or less. On 2 random tables with no rule, Opus said it found no rule.
 
-Training changes a network's weights a little at a time. This environment asks what happens when an LLM stops training, reads the weights, and writes new numbers into them by hand.
+We are using this environment to write a paper for ICML 2027. It was built in [AI Research School](https://www.skool.com/become-ai-researcher-2669). The licence is MIT: you can use it for your own research without asking and without adding anyone as a co-author.
 
-**An LLM (Claude Opus 5.5) lost the one test with a bar written first: it scored .779 at step 1500, against .823 for the best training at that step and .856 for the best training at any step.**
+![Each task: the best training setting against Opus writing the weights with no training first](charts/tasks.png)
 
-**Two of the three earlier runs kept hand-written weights and ended above all the training we tried, but we chose that comparison after seeing them, and it did not repeat. The LLM can sometimes work out what a half-trained network has learned and write it into the weights, and so far that does not reliably beat strong training.**
-
-These are single runs on a toy network of 8,751 weights.
-
-> [!NOTE]
-> **A new search is running.** First round, one task per setting: changing weights after training passed on 3 of 4 kinds of task, and changing them before or during training passed on none. Each setting is now repeating on five new tasks. See [RESULTS.md](RESULTS.md).
-
-![Accuracy on pairs never trained on, against training steps](charts/curves.png)
+> **What this is, and what it is not.** Opus works out a rule from the answers, then stores that rule as weight numbers. That is program synthesis with a network as the storage, so the network itself is not what generalises. These are single runs on a toy network of 8,751 weights.
 
 ---
 
-## Pause training, let the LLM change the weights, then let training go on
+## Stop training, let the LLM write the weight numbers, and find out when that helps
 
-![The loop: train 150 steps, pause, Opus reads and changes the network, repeat until step 600, then training goes on alone](charts/loop.png)
+Training moves every weight a little at a time, using gradients. An LLM can do something different: read what the network must do, work out a rule, and calculate the weight numbers that carry that rule out.
 
-The network learns four skills. Each skill takes two numbers, **a** and **b**, and gives a class from 0 to 7. Each skill follows a hidden table, built from a sum, a product, a larger or smaller of two, or a difference, of two hidden per-number values.
+We asked where this helps. Fresh Opus runs got one of four chances, and training then went on alone to step 6,000:
 
-Every 150 training steps up to step 600, the LLM may change the network. It can write **new weight numbers**, or set **speeds**, which multiply how far each weight moves per training step. It computes numbers with its own short Python, which may not use gradients or fit weights to a loss.
+![Four tests: Opus changes the weights before, during, after or instead of training](charts/modes.png)
 
-The LLM is never told the tables, never sees the training examples, and never sees **held-out pairs**, the 30% of (a, b) pairs the network does not train on. Accuracy on those pairs is read once, at the end. Every number below is that accuracy, averaged over the four skills.
+The network learns four **skills**. Each skill takes two numbers, a and b, and gives one of 8 classes by a hidden rule. **Held-out pairs**, 30% of all (a, b) pairs, are never trained on and never shown to Opus. The score is accuracy on those pairs.
+
+Opus may write short Python to calculate its numbers, but no gradients and no iterative fitting of weights to a loss. **Best training** is the best of 34 settings of learning rate, weight decay, dropout, fixed speeds and published edits such as weight averaging. Its best step is picked on held-out pairs, which favours training. A pass rule and numeric predictions were pushed before each counted test, and failed predictions stay in [NOTES.md](NOTES.md).
 
 ---
 
 ## Results
 
-### Do not expect a win when the edits stop: the LLM beat fixed speeds in 1 of 4 runs
+![Opus's best reading minus training's best reading, for each timing and kind of task](charts/timing.png)
 
-The comparison is the best of 14 fixed speeds. Each multiplies every weight's step by one number, from step 0 or from step 150. The search for the first run ran after that run. The bar for the later runs was written before they started. The fourth run was told its goal was step 1500, not step 600.
+### Do not change weights before or during training: Opus lost on all 4 kinds of task
 
-| Step 600 | Plain training | Best fixed speed | Opus | Gain |
-|---|---|---|---|---|
-| First run, tables 1 | .579 | .803 | **.847** | +.044 |
-| Second run, tables 2 | .542 | **.776** | .760 | -.016 |
-| Third run, tables 2 | .542 | **.776** | .764 | -.012 |
-| Fourth run, tables 3 | .576 | **.770** | .603 | -.167 |
+Before training it saw only 64 examples per skill. During training it had three pauses in the first 600 steps. It lost by .03 to .59 against training's best, which kept rising past what Opus wrote. This is one task per setting, so it shows direction and not size.
 
-> **At step 600 the first result did not repeat.**
+### Change weights after training for a quick jump, and expect a small lead at the end
 
-### Do not count on a higher ceiling: kept hand-written weights ended above all training in 2 of 3 runs
+Opus changed a network once, after 1,500 steps of training. The first number compares both at step 1,650. The second compares each one's best reading through step 6,000.
 
-Each finished run was trained further with no LLM. We then compared it with the strongest training we tried, 27 settings of learning rate, weight decay and dropout. We chose this comparison after seeing the first three runs, so those rows are a hypothesis, and the fourth run did not support it.
+| Kind of task | Tasks | Gain at step 1,650 | Gain at the best reading | Rule |
+|---|---:|---:|---:|---|
+| Numbers wrapped at 16 | 6 | **+.237** | +.016 | Passed |
+| Rule shapes no script knows | 5 | **+.065** | -.009 | Passed |
+| 25% of training answers wrong | 6 | **+.038** | +.014 | Passed by .00005 |
+| Sums, products, larger, smaller | 6 | **+.037** | +.018 | Failed: +.026 on new tasks |
+| Half one shape, half another | 1 | -.076 | -.135 | Failed |
 
-| Highest reading through step 6000 unless noted | Plain | Strongest training, same size | Opus, its own speeds | Opus, all speeds 1 |
-|---|---|---|---|---|
-| First run | .779 | .852 (step 10800) | **.901** | .899 |
-| Second run, no weight change kept | .781 | **.844** | .760 | .762 |
-| Third run | .781 | .844 | .864 | **.902** |
-| Fourth run | .763 | **.856** | .806 | .846 |
+> **After training, Opus jumps ahead at that step. Training never reached Opus's first reading on 14 of 24 tasks, but the mean gap at the best reading stayed under .02.**
 
-> **Training here is cheap: 6000 steps take about 4 seconds, and one LLM reply takes far longer. The result is about where the network ends up, not about saved time.**
+### Replace training when you hold the answers and they follow a rule
 
-### Do not freeze neurons for a skill the LLM cannot read
+Opus got random weights and every training answer. It never saw the network train, because no training ran before its change. It worked out a rule, wrote the weights, and then 150 steps ran at speeds it chose. Training after its change added at most .018.
 
-In the third run Opus read three skills correctly, wrote weights for them and froze them. It could not read the fourth, which then had few neurons to train on.
+| Kind of task | Tasks | Opus, first reading | Best training at any step |
+|---|---:|---:|---:|
+| Rule shapes no script knows | 5 | **.981** | .932 |
+| Sums, products, larger, smaller | 3 | **.941** | .912 |
+| Half one shape, half another | 3 | **.883** | .753 |
+| 25% of training answers wrong | 3 | **.792** | .580 |
+| Numbers wrapped at 16 | 2 | **1.000** | .967 |
+| Random tables, no rule | 2 | .123 | .153 |
 
-| Third run, step 600 | Opus | Best of 24 training controls | Gap |
-|---|---|---|---|
-| Smaller of two values | .925 | .997 | -.072 |
-| Sum | **.919** | .802 | +.117 |
-| Difference | .338 | .63 | -.292 |
-| Product | **.873** | .795 | +.078 |
+> **Opus was above best training on all 16 tasks with a rule, and it passed the written rule on all 5 kinds.** Its gains were largest where training suffers most: mixed rules and wrong answers.
 
-> **Writing weights won on the skills it read and lost more than that on the one it did not.**
+### Use a plain script when you know the possible rule shapes, and an LLM when you do not
 
-### Do not trust the earlier wins: the fourth run lost to a bar written first
+Two scripts got the same answers. One tries a fixed list of rule shapes that we wrote. The other, **co-clustering**, gets no list: it groups rows and columns of the answer table that behave alike.
 
-The fourth run used new hidden tables and allowed 30 replies, of which Opus used 13. The goal told to the editor was accuracy at step 1500. Every baseline, the bar and our prediction were recorded before it started.
+![Opus against two scripts and best training, on each kind of task](charts/rivals.png)
 
-| Bar, mean at step 1500 | Opus beats it | Tie | Opus loses | Opus scored |
-|---|---|---|---|---|
-| Strongest training at any step, .856 | above .886 | .826 to .886 | below .826 | **.779, loses** |
-| Best training at step 1500, .823 | above .853 | .793 to .853 | below .793 | **.779, loses** |
+> **The list script scored .902 against Opus's .792 when 25% of the answers were wrong, because its list contained the right shapes. Outside its list it scored .52, against Opus's .98.** Opus beat co-clustering on 15 of 16 tasks, but that is one quick rival, and a stronger synthesis method might match Opus.
 
-Our prediction was a mean of .82 to .90, most likely about .86, so **the prediction was wrong**.
+### Do not read a rule unless the task has one
 
-![Each Opus run at step 1500 against the best training at step 1500 and at any step](charts/runs.png)
+On both random tables, Opus reported no rule, silenced unused outputs, and scored within .03 of best training. Two tasks are a small test of this.
 
-Opus worked out one rule exactly, the larger of two hidden values. It wrote that rule into 8 neurons, which then scored 1.000 on held-out pairs. The best training also reaches 1.000 on that skill by step 1500, so writing it gained nothing there. Opus guessed the wrong form for the product and sum skills, and never identified the difference skill.
+### If the answers are gone, read the rule out of the trained network
 
-| Step 1500, held-out | Difference | Larger | Product | Sum | Mean |
-|---|---|---|---|---|---|
-| Plain training | .519 | .981 | .802 | .724 | .756 |
-| Best training at step 1500 | .662 | 1.000 | **.854** | .776 | **.823** |
-| Opus, its own speeds (counted) | **.705** | 1.000 | .734 | .679 | .779 |
-| Same weights, all speeds 1 (post hoc) | .672 | 1.000 | .841 | **.789** | .826 |
-
-> **The skill Opus could not read scored above training on its own neurons, by .043. Its last speed settings cost .047 on the mean, and edits stop at step 600, so it could not correct them.**
+Without the answers, a script tried its rule list on a trained network's predictions. The rule scored above the network it came from on 15 of 15 tasks: 1.000 vs .956 for wrapped numbers, .930 vs .887 for tables and .718 vs .595 with 25% wrong answers. On rule shapes outside any list, Opus reading a trained network scored +.095 above co-clustering on the same network, above on 4 of 5. [RESULTS.md](RESULTS.md) has the tables.
 
 ---
 
 ## Where it stops working
 
 > [!WARNING]
-> - **One run per setting** on a toy with 8,751 weights. Nothing here has been tried on a language model. Neighbouring fixed speeds differ by up to .03.
-> - **The task family suits hand-writing.** Every table is built from two hidden per-number values, a shape the LLM can guess. Tasks with no such shape may give nothing.
-> - **The step 1500 and step 6000 comparisons are post hoc** for the first three runs. Only the fourth run's step 1500 score was tested against a bar written first, and that is one run. The strongest training row was read on held-out pairs, which favours training.
-> - **The fourth run had one relay error.** One number sent to the editor was mistyped and corrected in the next message. See [RESULTS.md](RESULTS.md#relay-errors).
-> - **The LLM's short Python does real work.** It reads the network's predictions and calculates the weights. It uses no gradients and no labels, but it does use CPU.
-> - **Nobody outside has reviewed this.** Claude Opus 5.5 built the environment, ran the runs and wrote this text. A separate fresh Opus plays each editor.
+> - **One Opus run per task, on a toy.** The network has 8,751 weights. Nothing here has been tried on a language model, or on natural data.
+> - **Every task with a rule is two-part by construction.** Each answer depends on hidden values of a and b. Tasks with no short rule may give nothing.
+> - **Opus's short code does real work.** Some runs used repeated discrete searches, vote passes, one-pass least squares or SVD over the answers. These touch no weights against a loss. They were disclosed and not voided, and each run's code is in its ledger.
+> - **The search grew as results came in.** We screened 13 settings first and added modes after seeing them. Each later rule was pushed before its test, on tasks not used before. Peak readings of Opus and training are both picked on held-out pairs.
+> - **Opus editors may have received general context about earlier results.** Each ran as a fresh agent, and its transcript was audited for any tool use beyond the bench. A fresh Opus is not an independent lab.
+> - **Nobody outside has reviewed this.** Claude Opus 5.5 built the environment, ran the runs and wrote this text.
 
 ---
 
 ## Is this new?
 
-Searches did not settle this. We found no work where an LLM edits weights during training, and no comparison of hand-written and trained weights on held-out data like this one.
+Not as a kind of result. Rules extracted from networks have beaten those networks before, and our three searches do not settle the question.
 
-| Work | LLM writes weights | During training | Compared with |
+| Work | What finds the rule | Written back as weights | Compared with training on unseen data |
 |---|---|---|---|
-| [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/) (Takehi et al., 2026, blog post) | Yes | No, finished or new networks | Trained networks, base models |
-| [ACDC](https://arxiv.org/abs/2304.14997) (Conmy et al., 2023) | No, finds circuits automatically | No | Other circuit methods |
-| [Weight-sparse transformers](https://arxiv.org/abs/2511.13653) (2025) | No | No | Dense networks |
-| This repository | Yes | **Yes** | **27 training settings, 14 fixed speeds** |
+| TREPAN (Craven and Shavlik, 1996) | Decision tree from a network's answers | No | Yes, against the network |
+| [REFNE](https://lamda.nju.edu.cn/publication/aicom03.pdf) (Zhou, Jiang and Chen, 2003) | Rule search on an ensemble's answers | No | Yes, rules can win |
+| KBANN (Towell and Shavlik, 1994) | A person writes the rules | **Yes**, then trains | Yes |
+| [Doshi et al., 2023](https://arxiv.org/abs/2310.13061) | A regularised network, on corrupted modular labels | No | Recovers the clean rule |
+| [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/) (2026) | An LLM | **Yes**, finished or new networks | Trained networks, base models |
+| This repository | An LLM, with no list of shapes | **Yes** | **34 settings, at four timings, with a rule written first** |
 
-The Sparks post is the starting point. It reports an LLM writing a Breakout policy that beats a network trained with PPO, and editing a small language model to raise its MATH-500 score from 7.9% to 48.1%. It does not report edits during training or a comparison with further training.
+The new part is narrow: this comparison of timings, with an LLM as the editor, and a rule written before each test.
 
 ---
 
@@ -133,12 +120,13 @@ pip install -r requirements.txt
 python3 -m venv toy/.kernel && toy/.kernel/bin/pip install numpy scipy
 ```
 ```bash
-cd toy && TOY_RULES=secret python3 loop.py test
+cd toy && python3 search.py test
 ```
 
-The sandbox for the LLM's Python runs on macOS. The Linux path exists and has not been tested. To run an editor, and for every number and command, see [RESULTS.md](RESULTS.md).
+The sandbox for the LLM's Python runs on macOS. The Linux path exists and has not been tested.
 
-- [RESULTS.md](RESULTS.md): every table, the commands and how to play an editor.
-- [NOTES.md](NOTES.md): the working log, with the bars and predictions written before each run, including the ones that failed.
+- [RESULTS.md](RESULTS.md): every table, the reviewer objections, the commands and how to play an editor.
+- [NOTES.md](NOTES.md): the working log, with every rule and prediction written before each test.
+- [toy/search_runs/](toy/search_runs/): each of the 51 Opus runs, with its code, outputs and audit.
 - [language-model/](language-model/README.md): a second bench for repairing planted defects in a small language model. It has no counted LLM result yet.
 - [chart.py](chart.py) draws every image from the result files.
