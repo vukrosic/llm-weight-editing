@@ -1,13 +1,13 @@
 # Environment for researching how an LLM can replace or augment training by writing network weights
 
 > [!IMPORTANT]
-> **Given every training answer and no training at all, Claude Opus 5.5 wrote weights that scored higher on unseen inputs than the best of 34 training settings at any step, on all 16 tasks that have a rule: mean +.089 at its first reading (standard error .021), smallest +.010.**
+> **Given every training answer and no training at all, Claude Opus 5.5 wrote weights that scored higher on unseen inputs than the best of 34 training settings at any step, on 14 of the 16 tasks that have a rule: mean +.080 (standard error .023). It lost the other two by .029 and .003.**
 >
 > Changing weights before or during training lost on all 4 kinds of task. Changing them after training helped at that step on 4 of 5 kinds, and the lead at the best reading was .02 or less. On 2 random tables with no rule, Opus said it found no rule.
 
 We are using this environment to write a paper for ICML 2027. It was built in [AI Research School](https://www.skool.com/become-ai-researcher-2669). The licence is MIT: you can use it for your own research without asking and without adding anyone as a co-author.
 
-![On the 16 toy tasks with a rule, normal training scored 83% on the hidden 30% of pairs and Opus 5.5 scored 92%](charts/result.png)
+![On the 16 toy tasks with a rule, normal training scored 83% on the hidden 30% of pairs and Opus 5.5 scored 91%, with no training](charts/result.png)
 
 ### The task: find a hidden rule from examples
 
@@ -21,7 +21,7 @@ In the example below, each number has a secret code, and the answer is the two c
 
 First we trained the network normally and kept the best score from 34 training settings at any step, which favours training. Then Claude Opus 5.5 read the same training data and wrote all 8,751 weights as literal numbers, with no training at all.
 
-Opus found the rule, calculated weights that compute it, and was scored on the hidden pairs at that first reading.
+Opus found the rule and calculated weights that compute it. These scores are the weights exactly as Opus wrote them, on the hidden pairs, with no training step after them.
 
 ![One task: Opus reads the examples, finds that the answer is code OR code, writes all 8,751 weights, and gets a hidden pair right](charts/example.png)
 
@@ -29,11 +29,11 @@ Opus found the rule, calculated weights that compute it, and was scored on the h
 
 | Tasks | Normal training | Opus 5.5 |
 |---|---:|---:|
-| 16 tasks with a rule | 83.3% | **92.2%** |
-| 3 of those, with 25% of training answers made wrong | 58.0% | **79.2%** |
-| 2 random tables with no rule (not in the 16) | **15.3%** | 12.3% |
+| 16 tasks with a rule | 83.3% | **91.3%** |
+| 3 of those, with 25% of training answers made wrong | 58.0% | **76.3%** |
+| 2 random tables with no rule (not in the 16) | **15.3%** | 12.6% |
 
-Opus won on all 16 tasks with a rule, by +.089 on average (standard error .021, smallest gain +.010). With 25% wrong answers, the hidden pairs keep their correct answers, so Opus recovered most of the rule despite the errors.
+Opus won on 14 of the 16 tasks with a rule, by +.080 on average (standard error .023). It lost one task by .029 and one by .003, both among sums, products, larger and smaller, where the mean over 3 tasks ties at .912. With 25% wrong answers, the hidden pairs keep their correct answers, so Opus recovered most of the rule despite the errors.
 
 More complex tasks have not been tested yet.
 
@@ -79,20 +79,20 @@ Opus changed a network once, after 1,500 steps of training. The first number com
 
 ### Replace training when you hold the answers and they follow a rule
 
-![Two paths from the same training answers: gradient descent reaches .833 on pairs it never saw; Opus reads the answers, finds the rule, calculates every weight and reaches .922. Below, the four steps on one real task](charts/flow.png)
+![Two paths from the same training answers: gradient descent reaches .833 on pairs it never saw; Opus reads the answers, finds the rule, calculates every weight and reaches .913. Below, the four steps on one real task](charts/flow.png)
 
-Opus got random weights and every training answer. It never saw the network train, because no training ran before its change. It worked out a rule, wrote the weights, and then 150 steps ran at speeds it chose. Training after its change added at most .018.
+Opus got random weights and every training answer. It never saw the network train, because no training ran before its change. It worked out a rule and wrote the weights. The test then ran 150 steps at speeds it chose, and it set every speed to 0 on 6 of 18 tasks. So the table gives both scores: the weights as written, and after those 150 steps.
 
-| Kind of task | Tasks | Opus, first reading | Best training at any step |
-|---|---:|---:|---:|
-| Rule shapes no script knows | 5 | **.981** | .932 |
-| Sums, products, larger, smaller | 3 | **.941** | .912 |
-| Half one shape, half another | 3 | **.883** | .753 |
-| 25% of training answers wrong | 3 | **.792** | .580 |
-| Numbers wrapped at 16 | 2 | **1.000** | .967 |
-| Random tables, no rule | 2 | .123 | .153 |
+| Kind of task | Tasks | Opus, no training | Opus, after 150 steps at its speeds | Best training at any step |
+|---|---:|---:|---:|---:|
+| Rule shapes no script knows | 5 | **.981** | .981 | .932 |
+| Sums, products, larger, smaller | 3 | .912 | .941 | .912 |
+| Half one shape, half another | 3 | **.892** | .883 | .753 |
+| 25% of training answers wrong | 3 | **.763** | .792 | .580 |
+| Numbers wrapped at 16 | 2 | **1.000** | 1.000 | .967 |
+| Random tables, no rule | 2 | .126 | .123 | .153 |
 
-> **Opus was above best training on all 16 tasks with a rule, and it passed the written rule on all 5 kinds.** Its gains were largest where training suffers most: mixed rules and wrong answers.
+> **With no training, Opus was above best training on 14 of 16 tasks with a rule. After its 150 steps it was above on all 16 and passed the written rule on all 5 kinds.** Its gains were largest where training suffers most: mixed rules and wrong answers.
 
 ### Use a plain script when you know the possible rule shapes, and an LLM when you do not
 
@@ -100,7 +100,7 @@ Two scripts got the same answers. One tries a fixed list of rule shapes that we 
 
 ![Opus against two scripts and best training, on each kind of task](charts/rivals.png)
 
-> **The list script scored .902 against Opus's .792 when 25% of the answers were wrong, because its list contained the right shapes. Outside its list it scored .52, against Opus's .98.** Opus beat co-clustering on 15 of 16 tasks, but that is one quick rival, and a stronger synthesis method might match Opus.
+> **The list script scored .902 against Opus's .763 when 25% of the answers were wrong, because its list contained the right shapes. Outside its list it scored .52, against Opus's .98.** Opus, with no training, beat co-clustering on 14 of 16 tasks, and co-clustering was slightly ahead on the 25% wrong tasks, .770 against .763. It is one quick rival, and a stronger synthesis method might match Opus.
 
 ### Do not read a rule unless the task has one
 

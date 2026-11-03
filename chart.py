@@ -92,6 +92,9 @@ def best_training(kind, inst, mode="answers", start=150):
 def script(rows, kind, inst): return [r for r in rows if r["source"] == "labels" and r["kind"] == kind and r["inst"] == inst][-1]["mean"]
 
 
+NT = {r["run"]: r["no_training_mean"] for r in map(json.loads, open("toy/search_runs/no_training.jsonl"))}
+
+
 def answers(kind): return sorted((r for r in R if r["mode"] == "answers" and r["kind"] == kind), key=lambda r: r["inst"])
 
 
@@ -101,20 +104,20 @@ def style(ax):
 
 
 def draw_tasks(path):
-    """One row per task: best training at any step against Opus's first reading."""
+    """One row per task: best training at any step against Opus's written weights with no training at all."""
     rows = [(label, r) for kind, label in KINDS for r in answers(kind)]
     fig, ax = plt.subplots(figsize=(10.5, 7.4)); y = 0; ticks = []; last = None
     for label, r in rows:
         if label != last and last is not None: y += .7
         if label != last: ax.text(-.012, y - .78, label, fontsize=11.5, color=INK, fontweight="bold", ha="left", transform=ax.get_yaxis_transform())
         if label != last: y += .25
-        t = best_training(r["kind"], r["inst"]); o = r["mean"]; last = label
+        t = best_training(r["kind"], r["inst"]); o = NT[r["run"]]; last = label
         ax.plot([t, o], [y, y], color=GRID, lw=3, zorder=1, solid_capstyle="round")
         ax.scatter(t, y, s=75, color=PLAIN, zorder=3, edgecolors=SURFACE, linewidths=1.5); ax.scatter(o, y, s=75, color=OPUS, zorder=3, edgecolors=SURFACE, linewidths=1.5)
         ax.text(max(t, o) + .012, y, f"{o - t:+.3f}".replace("0.", "."), va="center", fontsize=10.5, color=MUTED); y += 1
     ax.set_ylim(y, -1.2); ax.set_yticks([]); ax.set_xlim(.08, 1.06); ax.set_xlabel("Accuracy on pairs never trained on"); ax.grid(axis="x", color=GRID, lw=.8, zorder=0); ax.set_axisbelow(True); style(ax); ax.spines["bottom"].set_visible(False)
     handles = [plt.Line2D([], [], marker="o", ls="", ms=9, color=c) for c in (PLAIN, OPUS)]
-    fig.legend(handles, ["Best of 34 training settings, at its best step of 6,000", "Opus: answers read, weights written, no training first"], loc="lower center", ncol=2, frameon=False, fontsize=11)
+    fig.legend(handles, ["Best of 34 training settings, at its best step of 6,000", "Opus: answers read, weights written, no training at all"], loc="lower center", ncol=2, frameon=False, fontsize=11)
     fig.tight_layout(rect=(0, .05, 1, 1)); fig.savefig(path, dpi=170); plt.close(fig)
 
 
@@ -135,7 +138,7 @@ def draw_timing(path):
 def draw_rivals(path):
     """Mean over each kind's tasks: Opus against two scripts told every training answer, and best training."""
     shown = [k for k in KINDS if k[0] != "random"]; names = ("Rule shapes\nno script knows", "Sums, products,\nlarger, smaller", "Half one shape,\nhalf another", "25% of training\nanswers wrong", "Numbers wrapped\nat 16"); w = .2
-    series_ = (("Best training at any step", PLAIN, lambda r: best_training(r["kind"], r["inst"])), ("Script told a list of rule shapes", STRONG, lambda r: script(LI, r["kind"], r["inst"])), ("Script told no list (co-clustering)", NOEDIT, lambda r: script(CO, r["kind"], r["inst"])), ("Opus", OPUS, lambda r: r["mean"]))
+    series_ = (("Best training at any step", PLAIN, lambda r: best_training(r["kind"], r["inst"])), ("Script told a list of rule shapes", STRONG, lambda r: script(LI, r["kind"], r["inst"])), ("Script told no list (co-clustering)", NOEDIT, lambda r: script(CO, r["kind"], r["inst"])), ("Opus, no training", OPUS, lambda r: NT[r["run"]]))
     fig, ax = plt.subplots(figsize=(10.5, 4.8))
     for j, (label, c, f) in enumerate(series_):
         for i, (kind, _) in enumerate(shown):
@@ -200,10 +203,10 @@ def draw_flow(path):
     names = {"Rule shapes no script knows": "Rule shapes no script knows", "Sums, products, larger, smaller": "Sums, products, larger", "Half one shape, half another": "Half one shape, half another", "25% of training answers wrong": "25% of answers wrong", "Numbers wrapped at 16": "Numbers wrapped at 16"}
     rect(990, 50, 610, 410, "white", r=6, sw=1.4, stroke=C["ink"]); text(1010, 84, "Accuracy on pairs never trained on, never shown to Opus", 19, "bold", anchor="start")
     for i, (label, rs) in enumerate(rows):
-        y = 104 + i * 58; t = m4([best_training(r["kind"], r["inst"]) for r in rs]); o = m4([r["mean"] for r in rs])
+        y = 104 + i * 58; t = m4([best_training(r["kind"], r["inst"]) for r in rs]); o = sum(NT[r["run"]] for r in rs) / len(rs)
         text(1010, y + 25, names.get(label, label), 16.5, "bold" if i == 0 else "normal", anchor="start")
         add(f'<rect x="1250" y="{y + 4}" width="{t * 290:.1f}" height="19" rx="3" fill="{C["train"][0]}"/><rect x="1250" y="{y + 25}" width="{o * 290:.1f}" height="19" rx="3" fill="#12875e"/>')
-        if i == 0: text(1258, y + 19, "best training", 14, "bold", fill="white", anchor="start"); text(1258, y + 40, "Opus, no training first", 14, "bold", fill="white", anchor="start")
+        if i == 0: text(1258, y + 19, "best training", 14, "bold", fill="white", anchor="start"); text(1258, y + 40, "Opus, no training", 14, "bold", fill="white", anchor="start")
         text(1250 + t * 290 + 7, y + 20, f"{t:.3f}"[1:] if t < 1 else "1.000", 16, anchor="start"); text(1250 + o * 290 + 7, y + 41, f"{o:.3f}"[1:] if o < 1 else "1.000", 16, "bold", anchor="start")
     # Zoom into Opus
     add('<line x1="390" y1="421" x2="250" y2="490" stroke="#111111" stroke-width="1.2" stroke-dasharray="6 5"/><line x1="640" y1="421" x2="1120" y2="490" stroke="#111111" stroke-width="1.2" stroke-dasharray="6 5"/>')

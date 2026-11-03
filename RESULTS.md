@@ -182,7 +182,33 @@ A plain script with a list of rule shapes then ran on tasks 6-10, with no LLM. R
 
 ### Without any training: Opus given every training answer
 
-![Each task: the best training setting against Opus writing the weights with no training first](charts/tasks.png)
+![Each task: the best training setting against Opus's weights as written, with no training](charts/tasks.png)
+
+> [!WARNING]
+> **Correction, 2026-11-03.** An earlier version of this page and the README called the first reading "no training". In this test 150 steps ran after Opus's edit at speeds it chose, and it left some speeds above 0 on 12 of 18 tasks. `toy/no_training.py` replays each run's logged code and reads held-out pairs straight after the edit. The table below is that score. With no training at all the 16 tasks with a rule give .913 against .833, mean +.080, standard error .023, above best training on 14 of 16. The table further down keeps the first readings, which are .922 and +.089 after the 150 steps.
+
+| Run | Kind | Task | Largest mean speed on a tensor | Opus, no training | Opus first, after 150 steps | Best training, any step | Gain with no training |
+|---|---|---:|---:|---:|---:|---:|---:|
+| r34 | Rule shapes no script knows | 0 | .020 | .958 | .958 | .912 | +.046 |
+| r35 | Rule shapes no script knows | 1 | 0 | .975 | .975 | .928 | +.046 |
+| r36 | Rule shapes no script knows | 2 | 0 | .984 | .984 | .896 | +.088 |
+| r37 | Rule shapes no script knows | 3 | 0 | .992 | .992 | .958 | +.034 |
+| r38 | Rule shapes no script knows | 4 | 0 | .994 | .994 | .965 | +.029 |
+| r39 | Tables | 16 | 1.275 | .847 | .886 | .876 | -.029 |
+| r42 | Tables | 17 | .078 | .964 | .965 | .931 | +.033 |
+| r45 | Tables | 18 | .875 | .926 | .973 | .929 | -.003 |
+| r40 | Two shapes | 16 | 0 | .900 | .900 | .791 | +.109 |
+| r43 | Two shapes | 17 | .523 | .897 | .901 | .762 | +.135 |
+| r46 | Two shapes | 18 | 1.000 | .878 | .847 | .705 | +.173 |
+| r41 | 25% wrong | 16 | .708 | .568 | .661 | .556 | +.012 |
+| r44 | 25% wrong | 17 | .249 | .873 | .873 | .660 | +.213 |
+| r47 | 25% wrong | 18 | .007 | .849 | .842 | .524 | +.325 |
+| r48 | Wrapped | 16 | 0 | 1.000 | 1.000 | .960 | +.040 |
+| r49 | Wrapped | 17 | 0 | 1.000 | 1.000 | .974 | +.026 |
+| r50 | Random | 16 | .127 | .123 | .121 | .151 | -.028 |
+| r51 | Random | 17 | .127 | .128 | .126 | .156 | -.028 |
+
+The replay reproduced the recorded first reading exactly on 17 of 18 runs. On r47 it gave .849 where the run recorded .842, so r47's no-training score carries that gap.
 
 The rule was written before each batch: mean gain at the best reading at least +.03, and above zero on at least 4 of 5 tasks (on every task for the 3-task kinds). All 18 runs used tasks never used by anything else, except rule shapes no script knows, tasks 0-4, which the earlier Opus-with-network runs also used.
 

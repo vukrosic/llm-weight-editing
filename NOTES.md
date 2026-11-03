@@ -410,3 +410,11 @@ Predictions: (9) tables passes, +.03 to +.08: right, +.040. (10) Conditions pass
 A list search on the answers beat Opus on partly wrong, .902 vs .792, because the list holds the right shapes. It tied on tables and wrapped, and lost on rule shapes outside the list, .524 vs .981, and on conditions, .514 vs .883. Cocluster on answers lost to Opus on 15 of 16; r41 lost to it.
 
 The search answer: before and during training lose. After training jumps ahead at that step on 4 of 5 kinds, and training never reached the first reading on 14 of 24 tasks, but the mean gap at the best reading stays under .02. Instead of training, with all the answers, works best, and it is program synthesis with weights as the storage.
+
+## Correction: first readings were not "no training"
+
+The README and the post called the answers runs "no training". Reading the ledgers showed that 150 steps ran after the edit at speeds Opus chose, and 12 of 18 runs left some speed above 0. `no_training.py` replays each run's code and reads held-out pairs right after the edit. 17 of 18 replays reproduce the recorded first reading exactly; r47 gives .849 against .842.
+
+With no training at all: 16 rule tasks .913 vs .833, +.080, standard error .023, 14 of 16 above best training (r39 -.029, r45 -.003). Tables tie at .912. 25% wrong .763 vs .580. Against co-clustering 14 of 16, and on 25% wrong .763 vs .770.
+
+The earlier line "training after its change added at most .018" was also wrong: r41 gained .093 and r45 gained .047 in those steps, and r46 lost .031.

@@ -20,8 +20,8 @@ f.box(50, 305, 470, 190, B); f.text(285, 370, "Normal training", 40, "bold"); f.
 f.box(560, 305, 470, 190, G, RED, 4); f.text(795, 370, "Opus 5.5", 40, "bold"); f.text(795, 420, "writes the weight numbers", 32); f.text(795, 460, "itself, no training", 32)
 f.arrow((285, 495), (285, 555)); f.arrow((795, 495), (795, 555))
 f.box(50, 555, 980, 300, ("#111111", "#ffffff"), sw=2, r=10); f.text(540, 610, "Correct on the hidden 30% neither one saw", 36, "bold")
-f.text(285, 750, "83%", 120, "bold", B[0]); f.text(795, 750, "92%", 120, "bold", "#12875e"); f.text(285, 815, "best training result", 30, fill=MUTE); f.text(795, 815, "Opus", 30, fill=MUTE)
-f.text(540, 920, "Average of 16 toy tasks. Opus won on all 16.", 36, "bold"); f.text(540, 975, "A tiny network with 8,751 weights.", 32, fill=MUTE); f.text(540, 1020, "These tasks all have a rule. Harder tasks are not tested yet.", 30, fill=MUTE)
+f.text(285, 750, "83%", 120, "bold", B[0]); f.text(795, 750, "91%", 120, "bold", "#12875e"); f.text(285, 815, "best training result", 30, fill=MUTE); f.text(795, 815, "Opus", 30, fill=MUTE)
+f.text(540, 920, "Average of 16 toy tasks. Opus won on 14 of 16.", 36, "bold"); f.text(540, 975, "A tiny network with 8,751 weights.", 32, fill=MUTE); f.text(540, 1020, "These tasks all have a rule. Harder tasks are not tested yet.", 30, fill=MUTE)
 f.save("charts/result")
 
 f = Fig()
