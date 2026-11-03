@@ -171,3 +171,15 @@ Rule on the mean at step 1500:
 - Same-budget bar, against the best training at step 1500: above .853 Opus beats it; .793 to .853 is a tie; below .793 it loses.
 
 Prediction: mean .82 to .90, most likely about .86, so a tie on the main bar and a win on the same-budget bar. It keeps hand-written weights on at least one skill with probability about three in four; if it keeps none, it will land near .76.
+
+### Fourth Opus run: result (2026-11-03)
+
+`secret3-1` scored **.779** at step 1500 and lost both bars: below .826 on the main bar (strongest training .856) and below .793 on the same-budget bar (.823). The prediction of .82 to .90 was wrong. It did keep hand-written weights on one skill, as predicted. It used 13 of 30 replies and 10 of 20 EVALs. At step 600 it read .603 against .770 for the best fixed speed.
+
+Per skill at step 1500 (difference, larger, product, sum): Opus .705, 1.000, .734, .679; best training at step 1500 .662, 1.000, .854, .776; plain .519, .981, .802, .724.
+
+Post hoc: the same weights with every speed at 1 after step 600 read .826 at step 1500 and peak at .846, still below the strongest training's .856. Its own speeds read .806 at peak. So the higher ceiling seen in the first and third runs did not repeat on new tables.
+
+Reading: it worked out one rule exactly, and training reaches 1.000 on that skill anyway. It guessed "smaller" for product and sum without testing, and never identified the difference skill. Its own neurons helped the difference skill by .043 over the best training. Speed 10 on the product and sum paths, left in place through step 1500, cost .047 on the mean.
+
+Relay error: result 12 was retyped with one wrong number and corrected in the next message; details in `toy/runs_set3/secret3-1/relay_errors.md`. The word-match flag on reply 11 is the word "fit" in printed labels, with no fitting in the code.

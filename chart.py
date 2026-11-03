@@ -24,17 +24,18 @@ def get(st, name): return [r for r in curves if r["set"] == st and r["name"] == 
 
 
 def draw_curves(panels, path):
+    """Each run is (name, colour) or (name, colour, line style)."""
     fig, axes = plt.subplots(1, len(panels), figsize=(5.6 * len(panels), 4.6), sharey=True, squeeze=False)
     for ax, (st, title, runs) in zip(axes[0], panels):
         x, y = series(get(st, "plain")); ax.plot(x, y, color=PLAIN, lw=1.6)
         x, y = series(strongest(st)["curve"]); ax.plot(x, y, color=STRONG, lw=1.6)
-        for name, colour in runs: x, y = series(get(st, name)); ax.plot(x, y, color=colour, lw=2)
+        for name, colour, *style in runs: x, y = series(get(st, name)); ax.plot(x, y, color=colour, lw=2, ls=style[0] if style else "-")
         ax.set_title(title, loc="left", fontsize=13); ax.set_xlabel("Training steps"); ax.set_xlim(0, 6000); ax.set_ylim(.2, 1); ax.grid(axis="y", color=GRID, lw=.8); ax.set_axisbelow(True)
         for s in ("top", "right", "left"): ax.spines[s].set_visible(False)
         ax.tick_params(length=0); ax.axvline(600, color=MUTED, lw=.8, ls=":"); ax.text(640, .225, "edits stop at step 600", color=MUTED, fontsize=10)
     axes[0][0].set_ylabel("Accuracy on pairs never trained on")
-    handles = [plt.Line2D([], [], color=PLAIN, lw=2), plt.Line2D([], [], color=STRONG, lw=2), plt.Line2D([], [], color=OPUS, lw=2), plt.Line2D([], [], color=NOEDIT, lw=2)]
-    fig.legend(handles, ["Plain training", "Strongest training we tried", "Opus changed weights and kept them", "Opus kept no weight change"], loc="lower center", ncol=4, frameon=False, fontsize=11)
+    handles = [plt.Line2D([], [], color=PLAIN, lw=2), plt.Line2D([], [], color=STRONG, lw=2), plt.Line2D([], [], color=OPUS, lw=2), plt.Line2D([], [], color=NOEDIT, lw=2), plt.Line2D([], [], color=OPUS, lw=2, ls="--")]
+    fig.legend(handles, ["Plain training", "Strongest training we tried", "Opus kept its weights, all speeds 1 after step 600", "Opus kept no weight change", "Fourth run, its own speeds (the counted score)"], loc="lower center", ncol=5, frameon=False, fontsize=11)
     fig.tight_layout(rect=(0, .07, 1, 1)); fig.savefig(path, dpi=170); plt.close(fig)
 
 
@@ -62,8 +63,8 @@ def draw_loop(path):
 
 def draw_runs(path):
     """Each Opus run at step 1500 against the strongest training at step 1500 and at its best step."""
-    rows = [("First run\ntables 1", "1", "secret-1, speed 1", OPUS), ("Second run\ntables 2", "2", "secret2-1, speed 1", NOEDIT), ("Third run\ntables 2", "2", "secret2-2, speed 1", OPUS)]
-    fig, ax = plt.subplots(figsize=(9, 4.8)); w = .26
+    rows = [("First run\ntables 1\nall speeds 1", "1", "secret-1, speed 1", OPUS), ("Second run\ntables 2\nall speeds 1", "2", "secret2-1, speed 1", NOEDIT), ("Third run\ntables 2\nall speeds 1", "2", "secret2-2, speed 1", OPUS), ("Fourth run, counted\ntables 3\nits own speeds", "3", "secret3-1, its speeds", OPUS)]
+    fig, ax = plt.subplots(figsize=(10.5, 4.8)); w = .26
     for i, (label, st, name, colour) in enumerate(rows):
         same = [r for r in tuned if r["set"] == st and r["setting"].get("width", 48) == 48]
         at1500 = max(mean(r["curve"][60]) for r in same); best = max(max(mean(x) for x in r["curve"]) for r in same); opus = mean([x for x in get(st, name) if x["step"] == 1500][0])
@@ -79,5 +80,5 @@ def draw_runs(path):
 
 if __name__ == "__main__":
     draw_loop("charts/loop.png")
-    draw_curves([("1", "Tables 1, first Opus run", [("secret-1, speed 1", OPUS)]), ("2", "Tables 2, second and third Opus runs", [("secret2-1, speed 1", NOEDIT), ("secret2-2, speed 1", OPUS)])], "charts/curves.png")
+    draw_curves([("1", "Tables 1, first Opus run", [("secret-1, speed 1", OPUS)]), ("2", "Tables 2, second and third Opus runs", [("secret2-1, speed 1", NOEDIT), ("secret2-2, speed 1", OPUS)]), ("3", "Tables 3, fourth Opus run, bar written first", [("secret3-1, speed 1", OPUS), ("secret3-1, its speeds", OPUS, "--")])], "charts/curves.png")
     draw_runs("charts/runs.png")

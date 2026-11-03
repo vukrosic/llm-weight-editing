@@ -32,12 +32,13 @@ The editor gets up to 12 or 30 replies, 5 Python blocks per reply at 20 CPU seco
 | Second Opus run, no weight change kept | .974 | .753 | .542 | .773 | .760 |
 | Third Opus run | .925 | .919 | .338 | .873 | .764 |
 
-| Tables 3, no editor yet | Skill 0 | Skill 1 | Skill 2 | Skill 3 | Mean |
+| Tables 3 | Skill 0 | Skill 1 | Skill 2 | Skill 3 | Mean |
 |---|---|---|---|---|---|
 | Plain training | .195 | .964 | .630 | .513 | .576 |
 | Best fixed speed, x5 from step 0 | .539 | .974 | .805 | .763 | .770 |
 | Plain training to step 1800 | .529 | .971 | .802 | .750 | .763 |
 | Plain training to step 3000 | .542 | .974 | .792 | .724 | .758 |
+| Fourth Opus run | .205 | 1.000 | .627 | .581 | .603 |
 
 ## What each part of the first run was worth
 
@@ -54,7 +55,7 @@ It kept hand-written weights on about a quarter of the neurons, and its own spee
 
 ## After step 600
 
-Written after seeing the first three runs, so it is post hoc.
+Written after seeing the first three runs, so it is post hoc. The exception is the fourth run's own speeds at step 1500, which is the score counted against the written bar.
 
 | Network | Step 600 | Step 1500 | Step 6000 | Peak |
 |---|---|---|---|---|
@@ -67,8 +68,34 @@ Written after seeing the first three runs, so it is post hoc.
 | Tables 2, second run, speed 1 | .760 | .746 | .740 | .762 |
 | Tables 2, third run, its speeds | .764 | .858 | .860 | .864 |
 | Tables 2, third run, speed 1 | .764 | .883 | .896 | .902 |
+| Tables 3, plain | .576 | .756 | .746 | .763 |
+| Tables 3, fixed x5 | .770 | .759 | .744 | .774 |
+| Tables 3, fourth run, its speeds (counted at step 1500) | .603 | **.779** | .786 | .806 |
+| Tables 3, fourth run, speed 1 | .603 | .826 | .841 | .846 |
 
 The third run's own speeds keep its hand-written neurons frozen and it does worse than speed 1, which lets them train.
+
+## The fourth run against its written bar
+
+Run `secret3-1`, tables 3, `TOY_FINISH=1500`. It used 13 of 30 replies and 10 of 20 checks. The bar and prediction were written before it started, and are in [NOTES.md](NOTES.md).
+
+| Bar on the mean at step 1500 | Beats | Tie | Loses | Result |
+|---|---|---|---|---|
+| Strongest training at any step, .856 | above .886 | .826 to .886 | below .826 | .779, loses |
+| Best training at step 1500, .823 | above .853 | .793 to .853 | below .793 | .779, loses |
+
+Prediction: mean .82 to .90, most likely about .86. That was wrong. The second part of the prediction, that it keeps hand-written weights on at least one skill, held.
+
+| Step 1500 | Difference | Larger | Product | Sum | Mean |
+|---|---|---|---|---|---|
+| Plain training | .519 | .981 | .802 | .724 | .756 |
+| Best training at step 1500: dropout .1, lr .01, weight decay .1 | .662 | 1.000 | .854 | .776 | .823 |
+| Opus, its own speeds (counted) | .705 | 1.000 | .734 | .679 | .779 |
+| Same weights, all speeds 1 (post hoc) | .672 | 1.000 | .841 | .789 | .826 |
+
+What Opus did, from its ledger: at step 300 it rebuilt the network from its step 50 weights. It wrote `max(u(a), v(b))` into 8 neurons for the larger skill and froze their gates. At step 450 it gave the product and sum skills 8 neurons each, seeded from their row and column effects, with code weights at speed 10. It gave the difference skill the other 24 neurons at speed 3. In its last message it named the risk of those speeds, and said it had inferred the form "smaller" for the product and sum skills without testing it. That inference was wrong.
+
+The ledger has one flag, "reply 11: word match". The match is the word "fit" in printed labels such as "max model fit". That code tabulates predictions and fits nothing.
 
 ## Strongest training
 
@@ -105,4 +132,10 @@ Use a fresh LLM with no tools and no memory of this repository. `.claude/agents/
 2. Save its reply to a file and run `python3 loop.py step my-run reply.txt` with the same settings. Send the output back exactly.
 3. Repeat until step 600. Then run `python3 loop.py score my-run` once. The LLM never sees this score.
 
-`runs*/*/ledger.jsonl` holds every block each editor ran and every output it got. Local paths in tracebacks were shortened before publishing. Earlier relay errors are listed in [NOTES.md](NOTES.md). Runs after the first were checked by script against the bench output.
+`runs*/*/ledger.jsonl` holds every block each editor ran and every output it got. Local paths in tracebacks were shortened before publishing. Runs after the first were checked by script against the bench output.
+
+## Relay errors
+
+Earlier relay errors are listed in [NOTES.md](NOTES.md).
+
+In the fourth run the relay retyped result 12 and sent one wrong number: skill 2 `l2 p3 abs` as 1.0, where the bench printed 0.0. It was a diagnostic printed by the editor's own code, and the check line was correct. The next message said so and sent the exact output. Before that arrived, the editor drafted a reply to trace the false number. The bench reads only the last reply, so that draft never ran and used no reply and no check. The editor's next reply said the anomaly was only the copying error. The script checks only that an exact copy reached the editor, and the corrected copy passes it, so this one is recorded by hand in `toy/runs_set3/secret3-1/relay_errors.md`.

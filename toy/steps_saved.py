@@ -10,7 +10,7 @@ import loop
 from loop import RESULTS, RULE_SET, RUNS, SKILLS, TOTAL, acc, fresh, load, split, stretch
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, "steps_saved.jsonl"); END, EVERY = 6000, 25
-EDITORS = {"1": ["secret-1"], "2": ["secret2-1", "secret2-2"], "3": []}[RULE_SET]
+EDITORS = {"1": ["secret-1"], "2": ["secret2-1", "secret2-2"], "3": ["secret3-1"]}[RULE_SET]
 
 
 def best_speed():
@@ -31,7 +31,9 @@ def curve(st, tr, te, end=END, every=EVERY):
     return rows
 
 
-def recorded(name): return [json.loads(l) for l in open(RESULTS) if json.loads(l)["run"] == name][0]["held_out"]
+def recorded(name):
+    """The held-out score at step 600. A run scored with TOY_FINISH keeps that as at_edit_end."""
+    r = [json.loads(l) for l in open(RESULTS) if json.loads(l)["run"] == name][0]; return r.get("at_edit_end", r["held_out"])
 
 
 def plain(tr, te, end=END): return curve(fresh(), tr, te, end)
