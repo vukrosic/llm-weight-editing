@@ -81,7 +81,7 @@ Opus changed a network once, after 1,500 steps of training. The first number com
 
 ![Two paths from the same training answers: gradient descent reaches .833 on pairs it never saw; Opus reads the answers, finds the rule, calculates every weight and reaches .913. Below, the four steps on one real task](charts/flow.png)
 
-Opus got random weights and every training answer. It never saw the network train, because no training ran before its change. It worked out a rule and wrote the weights. The test then ran 150 steps at speeds it chose, and it set every speed to 0 on 6 of 18 tasks. So the table gives both scores: the weights as written, and after those 150 steps.
+Opus got random weights and every training answer. It never saw the network train, because no training ran before its change. It worked out a rule and wrote the weights. The test then ran 150 steps at speeds it chose, and it set every speed to 0 on 7 of 18 tasks. So the table gives both scores: the weights as written, and after those 150 steps.
 
 | Kind of task | Tasks | Opus, no training | Opus, after 150 steps at its speeds | Best training at any step |
 |---|---:|---:|---:|---:|

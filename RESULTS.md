@@ -185,7 +185,7 @@ A plain script with a list of rule shapes then ran on tasks 6-10, with no LLM. R
 ![Each task: the best training setting against Opus's weights as written, with no training](charts/tasks.png)
 
 > [!WARNING]
-> **Correction, 2026-11-03.** An earlier version of this page and the README called the first reading "no training". In this test 150 steps ran after Opus's edit at speeds it chose, and it left some speeds above 0 on 12 of 18 tasks. `toy/no_training.py` replays each run's logged code and reads held-out pairs straight after the edit. The table below is that score. With no training at all the 16 tasks with a rule give .913 against .833, mean +.080, standard error .023, above best training on 14 of 16. The table further down keeps the first readings, which are .922 and +.089 after the 150 steps.
+> **Correction, 2026-11-03.** An earlier version of this page and the README called the first reading "no training". In this test 150 steps ran after Opus's edit at speeds it chose, and it left some speeds above 0 on 11 of 18 tasks. `toy/no_training.py` replays each run's logged code and reads held-out pairs straight after the edit. The table below is that score. With no training at all the 16 tasks with a rule give .913 against .833, mean +.080, standard error .023, above best training on 14 of 16. The table further down keeps the first readings, which are .922 and +.089 after the 150 steps.
 
 | Run | Kind | Task | Largest mean speed on a tensor | Opus, no training | Opus first, after 150 steps | Best training, any step | Gain with no training |
 |---|---|---:|---:|---:|---:|---:|---:|
