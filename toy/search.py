@@ -1,6 +1,6 @@
 """Where does an LLM's change to a network's weights help: before, during or after training, and on which kinds of task?
 
-python3 search.py new RUN KIND INST MODE       make a run. KIND: tables conditions noisy modular random. MODE: before during after
+python3 search.py new RUN KIND INST MODE       make a run. KIND: tables conditions noisy modular random unseen. MODE: before during after
 python3 search.py step RUN - <<'REPLY' ...     the editor's only command: run its reply, print what it gets back. The first reply is START.
 python3 search.py score RUN                    once, after the run: read held-out pairs, then train on alone to step 6000 with no editor
 python3 search.py audit RUN TRANSCRIPT         void the run if the editor used anything but that one command
@@ -20,7 +20,7 @@ torch.set_num_threads(1)
 N, WIDTH, OUT, SKILLS = 32, 48, 63, 4
 BATCH, LR, SNAP, READ, FAR = 64, .003, 25, 25, 6000
 MAX_REPLIES, MAX_EVALS, MAX_BLOCKS, CPU, MAX_SPEED = int(os.environ.get("TOY_REPLIES", 16)), 20, 5, 20, 10.
-KINDS, MODES = ("tables", "conditions", "noisy", "modular", "random"), ("before", "during", "after")
+KINDS, MODES = ("tables", "conditions", "noisy", "modular", "random", "unseen"), ("before", "during", "after")
 PAUSES, END = dict(before=[0], during=[150, 300, 450], after=[1500]), dict(before=600, during=600, after=1650)
 NOISE = .25
 RUNS = os.environ.get("SEARCH_RUNS", os.path.join(HERE, "search_runs")); RESULTS, CONTROLS = os.path.join(RUNS, "results.jsonl"), os.path.join(RUNS, "controls.jsonl")
@@ -38,9 +38,23 @@ def cut(v, classes=8): return torch.bucketize(v, v.flatten().quantile(torch.lins
 def shapes(f, h): return [f + h, f * h, f.max(h), f.min(h), (f - h).abs()]
 
 
+def unseen(p, g):
+    """Rule shapes no script here was written for: a task draws four of these eight."""
+    def two(lo, hi): return torch.randint(lo, hi, (N,), generator=g)[:, None], torch.randint(lo, hi, (N,), generator=g)[None, :]
+    def real(): return torch.rand(N, generator=g)[:, None], torch.rand(N, generator=g)[None, :]
+    if p == 0: f, h = two(0, 16); return (f * h) % 16
+    if p == 1: f, h = two(0, 13); return (f + h) % 13
+    if p == 2: f, h = two(0, 16); return f & h
+    if p == 3: f, h = two(0, 16); return f | h
+    if p == 4: f, h = real(); return cut((f + h) % 1)
+    if p == 5: f, h = real(); return cut(torch.where(f > h, f + 0 * h, 1 - h + 0 * f))
+    if p == 6: f, h = two(1, 17); return (f * h) % 17 - 1
+    f, h = two(0, 16); return (f + h) // 2
+
+
 def tables(kind, inst):
     """Four hidden tables of (a, b) -> class. Each number gets its own hidden values per skill, so no formula on a and b gives the answer."""
-    g = torch.Generator().manual_seed(crc(f"{kind}-{inst}")); order = torch.randperm(5, generator=g).tolist(); out = []
+    g = torch.Generator().manual_seed(crc(f"{kind}-{inst}")); order = torch.randperm(5, generator=g).tolist(); out = []; picks = torch.randperm(8, generator=g)[:4].tolist() if kind == "unseen" else None
     two = lambda: (torch.rand(N, generator=g)[:, None], torch.rand(N, generator=g)[None, :])
     for s in range(4):
         if kind in ("tables", "noisy"): out.append(cut(shapes(*two())[order[s]]))
@@ -50,6 +64,7 @@ def tables(kind, inst):
         elif kind == "modular":
             f, h = torch.randint(16, (N,), generator=g)[:, None], torch.randint(16, (N,), generator=g)[None, :]
             out.append([(f + h) % 16, (f - h) % 16, (f + 3 * h) % 16, f ^ h][s])
+        elif kind == "unseen": out.append(unseen(picks[s], g))
         else: out.append(torch.randint(8, (N, N), generator=g))
     return out
 

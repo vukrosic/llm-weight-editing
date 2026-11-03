@@ -56,10 +56,10 @@ def vote_table(lp, op, f, h, sweeps=6):
 def rank01(x): return (np.argsort(np.argsort(x)) + .5) / len(x)
 
 
-def recover(lp, rng):
-    """The best rule of every family for one skill: starts from the network's own rows and columns, then votes. Returns {family: (f, h)}."""
+def recover(lp, rng, seen=None):
+    """The best rule of every family for one skill: starts from the network's own rows and columns, then votes. Returns {family: (f, h)}. seen: the share of the table with evidence, when only some pairs have any."""
     best = {}; T = lp.argmax(2)
-    for op in WHOLE if (T >= 8).mean() > .01 else ():
+    for op in WHOLE if (T >= 8).mean() > .01 * (seen or 1) else ():
         for r in range(0, N, 4):
             g, h = vote_whole(lp, op, T[r].copy() % 16, 6); s = agreement(lp, answers(op, g, h))
             if op not in best or s > best[op][0]: best[op] = (s, g, h)

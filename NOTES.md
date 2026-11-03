@@ -287,3 +287,32 @@ Predictions for tasks 6-10, one run per setting, controls first:
 - The script that reads the network: wrapped numbers holds, mean gain +.20 to +.28, 5 of 5 above zero. Partly wrong answers holds against the 34 controls, mean +.03 to +.12, and is roughly even with the wrong-label methods, mean -.03 to +.05. Tables is not required by the rule, and I expect mean +.02 to +.07.
 - The search of training answers: wrapped numbers 1.000 on all five, tables .90 to .95, partly wrong answers .87 to .94.
 - If the search of training answers beats the network script on most tasks, then the network adds nothing on these tasks, and the paper must say so plainly.
+
+---
+
+## Well-trained networks, and the test on rule shapes nobody wrote a script for
+
+Well-trained networks read at step 6000 on tasks 11-15, no answers, one run per setting. The rule beat the network on all 15 tasks at the best settings.
+
+| Kind | Best setting | Rule | Network | Gains |
+|---|---|---|---|---|
+| Wrapped numbers | lr .01, wd .1, dropout .1 | 1.000 | .956 | +.039 +.068 +.062 +.028 +.025 |
+| Tables | same | .930 | .887 | +.068 +.017 +.082 +.019 +.030 |
+| Partly wrong | dropout .3 | .718 | .595 | +.141 +.080 +.104 +.153 +.138 |
+
+The script is told the list of rule families, so this says nothing about Opus. A new rival, `cocluster.py`, is told no list: it groups rows and columns that give the same answers, keeps one answer per pair of groups, and picks group counts on a tenth of its evidence set aside. Debugged on instance 0 of the old kinds only.
+
+New kind `unseen` (added without changing any old task, checked by hash over 16 instances of 5 kinds). Each task draws 4 of these 8 with hidden values per number: (f*h)%16; (f+h)%13; f&h; f|h; 8 bins of (f+h)%1 on real values; 8 bins of (f if f>h else 1-h) on real values; ((f*h)%17)-1 on 1..16; (f+h)//2. Still two-part, so a reviewer's objection that a rule exists to read still stands. Bench and rule frozen in this commit, before any `unseen` run.
+
+Tasks 0-4, in this order: 34 controls, script and list search, cocluster, then 5 Opus runs after training, at most 3 at once.
+
+Rule, same as before: mean gain at least +.03 and above zero on at least 4 of 5, at the first reading and through step 6000, against the best of the 34 controls. Two further comparisons on the same tasks, reported whatever they show: Opus at step 1650 against cocluster on the network at step 1500 (same evidence, no EVALs), and against cocluster on the training answers.
+
+Predictions:
+1. Search with the family list on answers scores below cocluster on answers by .05 or more, because six of eight shapes are outside its list.
+2. Cocluster on answers scores .85 or more.
+3. Opus passes the first-reading rule at +.10 or more, and fails the through-6000 rule.
+4. Opus beats cocluster on the network at step 1500 by .03 or more on at least 3 of 5.
+5. Opus scores below cocluster on the training answers.
+
+If 4 fails, reading a network needs no LLM on these tasks, and the paper's claim becomes the scripted one.
