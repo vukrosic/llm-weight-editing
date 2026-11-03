@@ -418,3 +418,11 @@ The README and the post called the answers runs "no training". Reading the ledge
 With no training at all: 16 rule tasks .913 vs .833, +.080, standard error .023, 14 of 16 above best training (r39 -.029, r45 -.003). Tables tie at .912. 25% wrong .763 vs .580. Against co-clustering 14 of 16, and on 25% wrong .763 vs .770.
 
 The earlier line "training after its change added at most .018" was also wrong: r41 gained .093 and r45 gained .047 in those steps, and r46 lost .031.
+
+## Handwritten digits: does writing weights hold when the data has no short rule?
+
+Prediction written before any Opus run or training control. Data: 1,797 images of 8 by 8 pixels, 10 classes, 70/30 split, network of 64, 48, 48, 10 with 5,962 weights. Score: the weights as written, with no training.
+
+Best training reaches .975 to .99. Opus writes a statistics-based classifier such as class templates or a linear discriminant, and scores .90 to .96, losing to training by at least .02. If Opus comes within .01 of training or beats it, the "needs a short rule" limit is wrong. If it scores under .90, writing weights has little to say about data without a short rule.
+
+Rivals with no network limit on split 0: nearest class mean .902, linear discriminant .946, logistic regression .957, 1 nearest neighbour .985.
