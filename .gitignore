@@ -15,3 +15,5 @@ toy/search_runs/*/work/
 toy/search_runs/pilot/
 toy/search_test/
 toy/search_runs/*/state.pt
+toy/digit_runs/*/work/
+toy/digit_runs/*/state.pt

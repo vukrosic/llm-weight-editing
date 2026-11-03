@@ -35,7 +35,7 @@ Opus found the rule and calculated weights that compute it. These scores are the
 
 Opus won on 14 of the 16 tasks with a rule, by +.080 on average (standard error .023). It lost one task by .029 and one by .003, both among sums, products, larger and smaller, where the mean over 3 tasks ties at .912. With 25% wrong answers, the hidden pairs keep their correct answers, so Opus recovered most of the rule despite the errors.
 
-More complex tasks have not been tested yet.
+One harder test so far used real handwritten digits, and Opus's written weights came within .006 of training on it. [The section below](#on-real-handwritten-digits-opuss-written-weights-came-within-006-of-best-training) has the numbers.
 
 > **What this is, and what it is not.** Opus works out a rule from the answers, then stores that rule as weight numbers. That is program synthesis with a network as the storage, so the network itself is not what generalises. These are single runs on a toy network of 8,751 weights.
 
@@ -112,11 +112,29 @@ Without the answers, a script tried its rule list on a trained network's predict
 
 ---
 
+## On real handwritten digits, Opus's written weights came within .006 of best training
+
+The tasks above are built from a hidden rule. Handwritten digits have no short rule, so we tested them too: 1,797 images of 8 by 8 pixels, 10 digits, 70% to work from and 30% hidden. The network has 5,962 weights. Opus changed the weights once, and the score below is those weights as written, with no training.
+
+| Method | Correct on hidden images |
+|---|---|
+| **Opus's written weights, no training** | **.970** |
+| Same statistics method as plain code, no network | .974 |
+| Best training, best of 24 settings at its best step | .976 |
+| Support vector machine, default settings | .976 |
+| 1 nearest neighbour | .985 |
+
+Opus computed one straight separating line for each pair of digits, 45 lines, from the average image of each digit and how pixels vary together. This method is called one-vs-one linear discriminant analysis. It stored those lines in the first layer and used the later layers to add up the votes.
+
+> **Before the run we predicted .90 to .96, losing to training by at least .02. That prediction was wrong.** This is one task on one split, and this dataset is easy. Opus used a known statistics method, and the same method as plain code scored .004 higher.
+
+---
+
 ## Where it stops working
 
 > [!WARNING]
-> - **One Opus run per task, on a toy.** The network has 8,751 weights. Nothing here has been tried on a language model, or on natural data.
-> - **Every task with a rule is two-part by construction.** Each answer depends on hidden values of a and b. Tasks with no short rule may give nothing.
+> - **One Opus run per task, on a toy.** The network has 8,751 weights. Nothing here has been tried on a language model. The only natural data so far is one split of small handwritten digits.
+> - **Every task with a rule is two-part by construction.** Each answer depends on hidden values of a and b. Handwritten digits have no short rule, and there Opus used a known statistics method without beating training or that method as plain code.
 > - **Opus's short code does real work.** Some runs used repeated discrete searches, vote passes, one-pass least squares or SVD over the answers. These touch no weights against a loss. They were disclosed and not voided, and each run's code is in its ledger.
 > - **The search grew as results came in.** We screened 13 settings first and added modes after seeing them. Each later rule was pushed before its test, on tasks not used before. Peak readings of Opus and training are both picked on held-out pairs.
 > - **Opus editors may have received general context about earlier results.** Each ran as a fresh agent, and its transcript was audited for any tool use beyond the bench. A fresh Opus is not an independent lab.

@@ -248,6 +248,27 @@ Predictions written first: (9) tables passes, +.03 to +.08: right, +.040. (10) T
 
 Opus with these answers scored above Opus reading a trained network, on the same 5 tasks of rule shapes no script knows, by +.081 at the first reading.
 
+### Handwritten digits: a task with no short rule
+
+Data: sklearn handwritten digits, 1,797 images of 8 by 8 pixels, 10 classes, 70/30 split (split 0). Network: 64, 48, 48, 10, with 5,962 weights. Opus edits once, then the weights are read as written. Code: `toy/digits.py`. Runs: `toy/digit_runs/`.
+
+| Reading on hidden images | Correct |
+|---|---|
+| Opus d1, weights as written, no training | .970 |
+| Opus d1, training on from those weights at its chosen small speeds, best step | .980 |
+| Best training, best of 24 settings at best step (dropout 0.3) | .976 |
+| Worst of the 24 settings at its best step | .944 |
+| Nearest class mean | .902 |
+| Linear discriminant | .946 |
+| Logistic regression | .957 |
+| One-vs-one linear discriminant, shrinkage .1 | .974 |
+| Support vector machine, default settings | .976 |
+| 1 nearest neighbour | .985 |
+
+Opus's method: 45 one-vs-one linear discriminants from class means and pair covariances, shrinkage .1. The first layer holds them, the first two layers clip each margin into a vote, and the third adds the votes. It chose its settings by 5-fold cross-validation on the training images. Training accuracy .9928. Its audit passed with 10 calls and 89,057 tokens. One word-match flag at reply 2 came from a function it named `fit`, and it computed no gradients.
+
+The prediction, in NOTES.md before the run, was .90 to .96 and a loss of at least .02. Both parts were wrong. The stored method did no better than the same method as plain code.
+
 ### When the answers are gone
 
 The script read rule shapes from a network's predictions alone, on tasks 11-15, at the settings shown. The fraction of answers needed and the per-task rows are in [NOTES.md](NOTES.md).

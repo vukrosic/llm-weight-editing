@@ -1,0 +1,1 @@
+{"run": "d1", "inst": 0, "written": 0.97, "after": 0.98, "replies": 9, "evals": 1, "flags": ["reply 2: word match"], "speed": {"l1.bias": 0.047, "l1.weight": 0.047, "l2.bias": 0.053, "l2.weight": 0.007, "l3.bias": 0.1, "l3.weight": 0.1}}
