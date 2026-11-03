@@ -1,5 +1,5 @@
 """Draw every image in charts/ from the result files in toy/. Run from the repo root: python3 chart.py"""
-import json
+import json, subprocess
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch
@@ -160,7 +160,99 @@ def draw_modes(path):
     fig.legend(handles, ["Opus changes the weights", "Training", "First reading"], loc="lower center", ncol=3, frameon=False, fontsize=11); fig.tight_layout(rect=(0, .1, 1, 1)); fig.savefig(path, dpi=170); plt.close(fig)
 
 
+def draw_flow(path):
+    """The first README figure: the two paths and one worked Opus run. The table and codes are run r35, skill 1, from its training answers and its own printout."""
+    C = dict(net=("#f39a4d", "#fdeedd"), data=("#d9a900", "#fff6cc"), train=("#2a78d6", "#dfeafa"), opus=("#1baf7a", "#dff5ec"), new="#d8342c", ink="#111111", mute="#55544f", panel="#f3f3f1")
+    S = []; add = S.append
+    def text(x, y, s, size=20, weight="normal", fill=C["ink"], anchor="middle", family="Helvetica, Arial, sans-serif", style="normal"):
+        add(f'<text x="{x}" y="{y}" font-family="{family}" font-size="{size}" font-weight="{weight}" font-style="{style}" fill="{fill}" text-anchor="{anchor}">{s.replace("&", "&amp;")}</text>')
+    def rect(x, y, w, h, role, r=14, sw=1.6, stroke=None, dash=""):
+        line, fill = C[role] if role in C and isinstance(C[role], tuple) else (stroke or C["ink"], role)
+        add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{r}" fill="{fill}" stroke="{stroke or line}" stroke-width="{sw}" {dash}/>')
+    def arrow(pts, label=None, at=None):
+        add('<path d="M' + " L".join(f"{x} {y}" for x, y in pts) + f'" fill="none" stroke="{C["ink"]}" stroke-width="1.8" marker-end="url(#head)"/>')
+        if label: text(*at, label, 17, fill=C["mute"])
+    def glyph(x, y, colour):
+        """A small network: inputs, two hidden layers, outputs."""
+        cols = [[-24, 0, 24], [-36, -12, 12, 36], [-36, -12, 12, 36], [-24, 0, 24]]
+        for c, (a, b) in enumerate(zip(cols, cols[1:])):
+            for p in a:
+                for q in b: add(f'<line x1="{x + c * 46}" y1="{y + p}" x2="{x + (c + 1) * 46}" y2="{y + q}" stroke="{colour}" stroke-width=".9"/>')
+        for c, a in enumerate(cols):
+            for p in a: add(f'<circle cx="{x + c * 46}" cy="{y + p}" r="6" fill="white" stroke="{C["ink"]}" stroke-width="1.2"/>')
+    add('<svg xmlns="http://www.w3.org/2000/svg" width="1640" height="990" viewBox="0 0 1640 990"><defs><marker id="head" markerWidth="7" markerHeight="7" refX="6.5" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="#111111"/></marker></defs><rect width="1640" height="990" fill="white"/>')
+    # Inputs
+    rect(40, 65, 280, 160, "net"); text(180, 96, "Network, random weights", 20, "bold"); glyph(111, 150, "#b9b8b2"); text(180, 214, "8,751 weights", 17, fill=C["mute"])
+    rect(40, 265, 280, 180, "data"); text(180, 296, "Training answers", 21, "bold")
+    for i, s in enumerate(("skill 1, a=0, b=0 → 14", "skill 1, a=0, b=1 → 7", "skill 1, a=1, b=4 → 7")):
+        rect(66, 310 + i * 34, 228, 28, "white", r=7, sw=1, stroke=C["data"][0]); text(180, 330 + i * 34, s, 17)
+    text(180, 435, "70% of pairs; 30% stay hidden", 16, fill=C["mute"])
+    # The two paths
+    for k in range(3): rect(390 + 16 - k * 8, 79 - 16 + k * 8 + 8, 250, 124, "train")
+    text(515, 121, "Gradient descent", 21, "bold"); text(515, 151, "6,000 small steps", 18); text(515, 178, "best of 34 settings", 18)
+    rect(700, 79, 230, 132, "net"); text(815, 107, "Trained network", 20, "bold"); glyph(746, 158, C["train"][0])
+    rect(390, 289, 250, 132, "opus", sw=3, stroke=C["new"]); text(515, 327, "Opus 5.5", 23, "bold"); text(515, 358, "reads the answers,", 18); text(515, 383, "finds the rule", 18)
+    rect(700, 289, 230, 132, "net"); text(815, 317, "Network with the rule", 20, "bold"); glyph(746, 368, C["opus"][0])
+    arrow([(320, 145), (390, 145)]); arrow([(320, 355), (390, 355)]); add(f'<path d="M352 355 L352 145" stroke="{C["ink"]}" stroke-width="1.8" fill="none"/><circle cx="352" cy="355" r="4" fill="{C["ink"]}"/><circle cx="352" cy="145" r="4" fill="{C["ink"]}"/>')
+    arrow([(656, 145), (700, 145)]); arrow([(640, 355), (700, 355)]); text(670, 342, "writes", 15, fill=C["mute"]); arrow([(930, 145), (990, 145)]); arrow([(930, 355), (990, 355)])
+    # Scores, from the result files
+    rows = [("All 16 tasks with a rule", [r for kind, _ in KINDS if kind != "random" for r in answers(kind)])] + [(label, answers(kind)) for kind, label in KINDS if kind != "random"]
+    names = {"Rule shapes no script knows": "Rule shapes no script knows", "Sums, products, larger, smaller": "Sums, products, larger", "Half one shape, half another": "Half one shape, half another", "25% of training answers wrong": "25% of answers wrong", "Numbers wrapped at 16": "Numbers wrapped at 16"}
+    rect(990, 50, 610, 410, "white", r=6, sw=1.4, stroke=C["ink"]); text(1010, 84, "Accuracy on pairs never trained on, never shown to Opus", 19, "bold", anchor="start")
+    for i, (label, rs) in enumerate(rows):
+        y = 104 + i * 58; t = m4([best_training(r["kind"], r["inst"]) for r in rs]); o = m4([r["mean"] for r in rs])
+        text(1010, y + 25, names.get(label, label), 16.5, "bold" if i == 0 else "normal", anchor="start")
+        add(f'<rect x="1250" y="{y + 4}" width="{t * 290:.1f}" height="19" rx="3" fill="{C["train"][0]}"/><rect x="1250" y="{y + 25}" width="{o * 290:.1f}" height="19" rx="3" fill="#12875e"/>')
+        if i == 0: text(1258, y + 19, "best training", 14, "bold", fill="white", anchor="start"); text(1258, y + 40, "Opus, no training first", 14, "bold", fill="white", anchor="start")
+        text(1250 + t * 290 + 7, y + 20, f"{t:.3f}"[1:] if t < 1 else "1.000", 16, anchor="start"); text(1250 + o * 290 + 7, y + 41, f"{o:.3f}"[1:] if o < 1 else "1.000", 16, "bold", anchor="start")
+    # Zoom into Opus
+    add('<line x1="390" y1="421" x2="250" y2="490" stroke="#111111" stroke-width="1.2" stroke-dasharray="6 5"/><line x1="640" y1="421" x2="1120" y2="490" stroke="#111111" stroke-width="1.2" stroke-dasharray="6 5"/>')
+    rect(40, 490, 1560, 440, C["panel"], r=6, sw=1.4, stroke=C["ink"]); text(62, 523, "What Opus did on one task, in Python it wrote itself", 20, "bold", anchor="start")
+    W = 355; xs = [62, 450, 838, 1226]
+    for x, title in zip(xs, ("1. Read the answers", "2. Group values that act alike", "3. State a rule, check it", "4. Calculate every weight")):
+        rect(x, 540, W, 375, "opus" if x == xs[3] else "white", r=10, sw=1.3, stroke=C["opus"][0]); text(x + W / 2, 572, title, 20, "bold")
+    for x in xs[:3]: arrow([(x + W, 727), (x + W + 33, 727)])
+    # Step 1: real corner of skill 1
+    T = [[14, 7, 6, 14, None, 15, 6], [14, 7, 6, 14, 7, 15, None], [12, 5, None, None, 5, None, 6], [None, None, 3, 13, None, 15, None], [9, 9, None, 13, None, None, None], [None, None, 7, None, 7, 15, None]]
+    x0, y0, cw, ch = xs[0] + 54, 618, 39, 36
+    text(x0 + 3.5 * cw, 600, "b", 17, style="italic", family="Georgia, serif"); text(x0 - 34, y0 + 3 * ch + 6, "a", 17, style="italic", family="Georgia, serif")
+    for a, row in enumerate(T):
+        text(x0 - 13, y0 + a * ch + 24, str(a), 15, fill=C["mute"])
+        for b, v in enumerate(row):
+            add(f'<rect x="{x0 + b * cw}" y="{y0 + a * ch}" width="{cw}" height="{ch}" fill="{"#fff6cc" if a < 2 else "white"}" stroke="#c9c8c2" stroke-width="1"/>')
+            if v is not None: text(x0 + b * cw + cw / 2, y0 + a * ch + 24, str(v), 16)
+    text(xs[0] + W / 2, 860, "Skill 1, top corner of its 32 × 32 table.", 16, fill=C["mute"]); text(xs[0] + W / 2, 885, "A blank pair was never shown to Opus.", 16, fill=C["mute"])
+    # Step 2: hidden codes
+    x = xs[1] + W / 2; text(x, 616, "Rows a=0 and a=1 agree, so", 17); text(x, 640, "a=0 and a=1 carry one hidden code.", 17)
+    for line, name, vals, y in ((C["data"][0], "a", "0 1 2 3 4 5".split(), 668), (C["train"][0], "b", "0 1 2 3 4 5".split(), 772)):
+        codes = [6, 6, 4, 1, 9, 7] if name == "a" else [8, 1, 2, 12, 5, 15]
+        text(xs[1] + 34, y + 25, name, 18, style="italic", family="Georgia, serif"); text(xs[1] + 34, y + 69, "code", 15, fill=C["mute"])
+        for i, (v, c) in enumerate(zip(vals, codes)):
+            cx = xs[1] + 62 + i * 46; rect(cx, y + 3, 40, 32, "white", r=5, sw=1, stroke="#c9c8c2"); text(cx + 20, y + 25, v, 16, fill=C["mute"]); add(f'<line x1="{cx + 20}" y1="{y + 35}" x2="{cx + 20}" y2="{y + 47}" stroke="{C["ink"]}" stroke-width="1.4"/>'); rect(cx, y + 47, 40, 34, C["data"][1] if name == "a" else C["train"][1], r=5, sw=1.2, stroke=line); text(cx + 20, y + 71, str(c), 17, "bold")
+    text(x, 885, "Opus found a code for all 32 values of a and b.", 16, fill=C["mute"])
+    # Step 3: the rule
+    x = xs[2] + W / 2; text(x, 626, "answer = code(a) OR code(b)", 21, style="italic", family="Georgia, serif")
+    for i, s in enumerate(("a=0, b=0:   6 OR 8 = 14  ✓", "a=0, b=1:   6 OR 1 = 7  ✓", "a=2, b=1:   4 OR 1 = 5  ✓")): text(x, 668 + i * 28, s, 18)
+    rect(xs[2] + 28, 748, W - 56, 62, C["data"][1], r=8, sw=1.2, stroke=C["data"][0]); text(x, 773, "It explains every training answer of skill 1", 15.5); text(x, 797, "Never shown: a=0, b=4 gives 6 OR 5 = 7", 15.5, "bold")
+    text(x, 838, "Other skills, other rules: skill 0 is a sum,", 16, fill=C["mute"]); text(x, 861, "skill 2 is the stronger side wins.", 16, fill=C["mute"])
+    # Step 4: what the numbers do
+    x = xs[3] + 22
+    for i, (name, line, y) in enumerate((("Layer 1", "one unit per bit of the code, on", 606), ("", "when that bit is 0 in both codes", 0), ("Layer 2", "turns each unit fully on or off", 672), ("Output", "reads the 4 bits as the answer", 722))):
+        if name: rect(x, y - 2, 74, 28, "white", r=6, sw=1, stroke=C["net"][0]); text(x + 37, y + 18, name, 15, "bold")
+        text(x + 86, (y or 606 + 26) + 18, line, 16, anchor="start")
+    rect(x, 768, W - 44, 40, "white", r=8, sw=1.2, stroke=C["opus"][0]); text(xs[3] + W / 2, 794, "No gradients. Training speed set to 0.", 17, "bold")
+    r = [r for r in R if r["run"] == "r35"][0]; t = best_training(r["kind"], r["inst"])
+    text(xs[3] + W / 2, 842, f"Skill 1 on hidden pairs: {r['held_out'][1] * 100:.0f}%", 18); text(xs[3] + W / 2, 871, f"Whole task: {r['mean']:.3f}"[:-5] + f"{r['mean']:.3f}"[1:] + f", best training {t:.3f}"[:-5] + f"{t:.3f}"[1:], 18, "bold")
+    # Legend
+    lx = 40
+    for fill, line, label, w in ((C["data"][1], C["data"][0], "Data", 90), (C["net"][1], C["net"][0], "Network", 120), (C["train"][1], C["train"][0], "Training", 120), (C["opus"][1], C["new"], "Opus, in place of training", 270)):
+        add(f'<rect x="{lx}" y="949" width="26" height="20" rx="4" fill="{fill}" stroke="{line}" stroke-width="1.6"/>'); text(lx + 34, 965, label, 16, anchor="start"); lx += w + 34
+    text(1600, 965, "One Opus run per task. Training's reading is its best step of 6,000, which favours training.", 16, fill=C["mute"], anchor="end")
+    add("</svg>"); open(path, "w").write("\n".join(S)); subprocess.run(["rsvg-convert", "-z", "2", path, "-o", path.replace(".svg", ".png")], check=True)
+
+
 if __name__ == "__main__":
+    draw_flow("charts/flow.svg")
     draw_loop("charts/loop.png")
     draw_curves([("1", "Tables 1, first Opus run", [("secret-1, speed 1", OPUS)]), ("2", "Tables 2, second and third Opus runs", [("secret2-1, speed 1", NOEDIT), ("secret2-2, speed 1", OPUS)]), ("3", "Tables 3, fourth Opus run, bar written first", [("secret3-1, speed 1", OPUS), ("secret3-1, its speeds", OPUS, "--")])], "charts/curves.png")
     draw_runs("charts/runs.png")

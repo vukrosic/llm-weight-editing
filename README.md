@@ -7,7 +7,7 @@
 
 We are using this environment to write a paper for ICML 2027. It was built in [AI Research School](https://www.skool.com/become-ai-researcher-2669). The licence is MIT: you can use it for your own research without asking and without adding anyone as a co-author.
 
-![Each task: the best training setting against Opus writing the weights with no training first](charts/tasks.png)
+![Two paths from the same training answers: gradient descent reaches .833 on pairs it never saw; Opus reads the answers, finds the rule, calculates every weight and reaches .922. Below, the four steps on one real task](charts/flow.png)
 
 > **What this is, and what it is not.** Opus works out a rule from the answers, then stores that rule as weight numbers. That is program synthesis with a network as the storage, so the network itself is not what generalises. These are single runs on a toy network of 8,751 weights.
 

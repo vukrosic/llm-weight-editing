@@ -182,6 +182,8 @@ A plain script with a list of rule shapes then ran on tasks 6-10, with no LLM. R
 
 ### Without any training: Opus given every training answer
 
+![Each task: the best training setting against Opus writing the weights with no training first](charts/tasks.png)
+
 The rule was written before each batch: mean gain at the best reading at least +.03, and above zero on at least 4 of 5 tasks (on every task for the 3-task kinds). All 18 runs used tasks never used by anything else, except rule shapes no script knows, tasks 0-4, which the earlier Opus-with-network runs also used.
 
 | Run | Kind | Task | Opus first | Opus best | Best training, any step | Co-clustering | List of shapes | Replies | Checks | Tokens |
