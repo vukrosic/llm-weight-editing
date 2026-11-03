@@ -107,6 +107,10 @@ The ledger has one flag, "reply 11: word match". The match is the word "fit" in 
 | 2 | .844 at step 5325 | dropout .1 | .791 | |
 | 3 | .856 at step 5375 | dropout .1, lr .01, weight decay .1 | .823 | |
 
+## Search: before, during or after training, on five kinds of task
+
+The rule and predictions were published before the first counted run. They are in [NOTES.md](NOTES.md), under "Search: where can Opus's weight changes help?". The code is [toy/search.py](toy/search.py). Results will appear here.
+
 ## Commands
 
 Run these in `toy/`. `TOY_RULE_SET` picks the tables.

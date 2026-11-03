@@ -183,3 +183,56 @@ Post hoc: the same weights with every speed at 1 after step 600 read .826 at ste
 Reading: it worked out one rule exactly, and training reaches 1.000 on that skill anyway. It guessed "smaller" for product and sum without testing, and never identified the difference skill. Its own neurons helped the difference skill by .043 over the best training. Speed 10 on the product and sum paths, left in place through step 1500, cost .047 on the mean.
 
 Relay error: result 12 was retyped with one wrong number and corrected in the next message; details in `toy/runs_set3/secret3-1/relay_errors.md`. The word-match flag on reply 11 is the word "fit" in printed labels, with no fitting in the code.
+
+## Search: where can Opus's weight changes help? Written before any counted run (2026-11-03)
+
+The new question: if Opus cannot replace training, can it augment it, and is that before, during or after training? Code: `toy/search.py`. Runs: `toy/search_runs/`.
+
+**The question.** Find a way of changing weights that helps a network more than the best training we can run, and name when it works and on which kinds of task. A technique counts once a plain script can repeat it without Opus.
+
+**When Opus edits.**
+- Before: Opus gets the random starting weights and 64 examples per skill, edits once, then training runs 600 steps.
+- During: Opus edits at steps 150, 300 and 450. First reading at step 600.
+- After: plain training to step 1500, Opus edits once, then 150 more steps. First reading at step 1650.
+
+Then training runs on alone to step 6000 in every mode.
+
+**Kinds of task.** The same network and four skills throughout, each with its own hidden tables.
+- Tables: each skill is a sum, product, larger, smaller or difference of hidden values per number, cut into 8 classes.
+- Conditions: half of the numbers a follow one shape, half another.
+- Partly wrong: tables, with a quarter of training answers wrong. Held-out answers are right.
+- Modular: hidden values added, subtracted or combined bit by bit, wrapped at 16. Training is slow here, and the rule is short.
+- Random: no rule. Chance is .125. This one has no answer to find, so it checks the bench for leaks.
+
+**Comparison.** The best of 34 controls on this task: 15 learning rate and weight decay settings, 4 dropout settings, 5 fixed speeds, and 2 to 4 published edits through the same pauses (weight averaging, shrink and perturb, resetting quiet neurons, a straight-line step, scaled starting weights). The best row and step are read on held-out pairs, which favours training.
+
+**Two gains, for one run.**
+1. First reading: Opus at its first reading minus the best control at that same step.
+2. Later peak: Opus's highest reading through step 6000 at its own speeds, minus the best control at any step from the first reading on. Both are read every 25 steps.
+
+**Stage 1, screening.** One Opus run on one new task for each of 13 cells: four kinds with rules at three times each, plus random during training. A cell passes if either gain is at least +.03. The up-to-three cells with the highest gains go on. If random gains more than +.05 on either reading, stop and look for a leak.
+
+**Stage 2, confirmation.** Five new tasks of the same kind (instances 1 to 5) for each cell that passed, controls first. The claim holds if the gain that passed is at least +.03 on average and above zero on at least 4 of 5. Screening alone proves nothing, because it tries 13 cells.
+
+**Stage 3, technique.** For each cell that holds, write what Opus did as a plain script with no LLM, and test it on five more new tasks (instances 6 to 10) by the same rule. If the script also holds, that is a new technique. If it fails, the result needs the LLM, and I report that.
+
+**If nothing passes**, I report that Opus found no technique in this search. Everything stays public, with no new bar chosen after seeing it.
+
+**Rules for every run.** 16 replies, 20 EVALs, 5 code blocks per reply at 20 CPU seconds. No gradients or iterative fitting. Fresh Opus 5.5, three at a time at most. Each editor talks to the bench through one allowed command, so nothing is retyped by me, and a run counts only if an audit of its transcript finds no other call. Token cost is logged for each run.
+
+**Prediction.** 1 or 2 of the 12 rule cells pass screening. Partly wrong tables, after training, is the most likely, because reading the rule could undo memorized wrong answers: first-reading gain 0 to +.10. Math tables during training: -.05 to +.05. Before training: every kind below the bar, with first-reading gain -.10 or worse, because 64 examples per skill say little. Modular: first-reading gain -.20 or worse in all three modes, because the network has learned little at those steps. Conditions: below the bar. Random: within +/-.03 of the best control.
+
+**How this answers an ICML reviewer.**
+| Reviewer's objection to the earlier work | What this does |
+|---|---|
+| Four runs on one kind of task | Five kinds, then five new tasks per claim |
+| Best results chosen after the runs | This rule is public before the first counted run |
+| Suits hand-written rules | Includes conditions, partly wrong answers, modular and no rule |
+| Is it the LLM or its code? | Stage 3 writes the technique as a script and tests it without the LLM |
+| Could published methods do this? | They run through the same pauses and count as controls |
+| Cost is ignored | Tokens are logged per run |
+| Relay errors | The editor's replies reach the bench directly, and the transcript is audited |
+
+Limits known now: one network size, by choice, because bigger models are not the question; the editor reads weights and history but not training data, except in "before"; a fresh Opus is not an independent lab; the controls' best row is picked from held-out pairs, while Opus has only training pairs.
+
+Closest work found (three extended searches, 2026-11-03): Sparks of Weight-Space Programming edits finished networks; Reinforcement Learning for Neural Model Editing (arXiv 2606.13461) has an RL policy scale or shift weights after training; Interactive Training (arXiv 2510.02297) proposes agents intervening in training but demonstrates log-based prompts; KBANN (Towell and Shavlik 1994) writes known rules into starting weights. None that I found has an LLM read weights and edit them during training against strong training controls. Three searches do not settle that.

@@ -11,3 +11,6 @@ language-model/sealed/
 language-model/runs/
 language-model/data
 .DS_Store
+toy/search_runs/*/work/
+toy/search_runs/pilot/
+toy/search_test/
