@@ -1,0 +1,10 @@
+{"kind": "mnist", "name": "linear discriminant", "test": 0.8765, "images": 60000, "seconds": 0.9}
+{"kind": "mnist", "name": "1 nearest neighbour", "test": 0.9691, "images": 60000, "seconds": 5.4}
+{"kind": "mnist", "name": "one-vs-one linear discriminant", "test": 0.9299, "images": 60000, "seconds": 10.1}
+{"kind": "mnist", "name": "logistic regression", "test": 0.9256, "images": 60000, "seconds": 3.5}
+{"kind": "mnist", "name": "support vector machine", "test": 0.9792, "images": 60000, "seconds": 285.9}
+{"kind": "cifar", "name": "linear discriminant", "test": 0.4166, "images": 50000, "seconds": 16.7}
+{"kind": "cifar", "name": "1 nearest neighbour", "test": 0.3536, "images": 50000, "seconds": 24.4}
+{"kind": "cifar", "name": "one-vs-one linear discriminant", "test": 0.4117, "images": 50000, "seconds": 287.4}
+{"kind": "cifar", "name": "logistic regression", "test": 0.3287, "images": 10000, "seconds": 2.3}
+{"kind": "cifar", "name": "support vector machine", "test": 0.471, "images": 10000, "seconds": 253.0}

@@ -281,17 +281,56 @@ The script read rule shapes from a network's predictions alone, on tasks 11-15, 
 
 Opus reading a trained network on rule shapes no script knows, after 1,500 steps: .789, .970, .769, .981, .990, mean .900. The co-clustering script on the same networks had a mean of .805. Best training at step 1,650 had a mean of .835.
 
+## Full MNIST and CIFAR-10: the tests the ICML review asked for
+
+Written by `toy/bigger.py`, with every row in `toy/bigger_runs/`. Predictions were pushed before any data was downloaded (see NOTES.md). The editor had numpy and scipy on one thread, 16 replies, 5 blocks per reply and 120 CPU seconds per block, and saw training images only. Banned: gradients and any loop that repeatedly improves weights or statistics against a loss, including k-means, alternating least squares, IRLS, boosting and `scipy.optimize`. Allowed: averages, covariances, one-shot solves and eigendecompositions, computing each layer once from earlier layers, and choosing among fixed settings on training images.
+
+Networks: MNIST 784, 512, 512, 10 (669,706 weights). CIFAR-10 three 3 by 3 convolutions of 64, 128 and 256 channels, each with silu and 2 by 2 max pooling, then a linear layer from 4,096 to 10 (411,786 weights). Training: batch 128, cosine fall to zero, 30 passes on MNIST, 60 on CIFAR-10. Standard error near .001 on MNIST and .004 on CIFAR-10. Data: put `mnist_{train,test}_{x,y}.npy` (uint8, n by 28 by 28) and `cifar_{train,test}_{x,y}.npy` (uint8, n by 3 by 32 by 32) in `toy/data/`.
+
+| Reading | MNIST prediction | MNIST result | CIFAR-10 prediction | CIFAR-10 result |
+|---|---|---|---|---|
+| Best training | .984 to .988 | .9871 plain, .9921 warped | .85 to .89 | .8776 |
+| Closed-form rival | .955 to .975 | .912 to .924, **wrong** | .55 to .70 | .620 to .686 |
+| Opus, as written | .965 to .982, losing by at least .005 | .9796 and .9844 | .60 to .75, losing by at least .10 | .7162 and .7047 |
+| Opus, then training on | within .002 of best training | +.0023 and +.0007 against plain training | within .01 | .8731, one reading |
+
+The prediction for warped training (.990 to .993) was written before those controls ran, and it held.
+
+| Run | Task | Written | CPU seconds | Blocks | Tokens reported | Recipe |
+|---|---|---|---|---|---|---|
+| m1 | MNIST | .9796 | 149 | 20 | 110,890 | Localized random units on partly whitened PCA, ridge fits, random quadratic units, ridge readout |
+| m2 | MNIST | .9844 | 527 | 21 | 109,704 | Eigenvectors of a one-shot quadratic classifier on warped images, stacked twice, ridge readout |
+| c1 | CIFAR-10 | .7162 | 1,282 | 38 | 107,412 | Whitened PCA filters in both signs, class and region filters in c3, ridge readout |
+| c2 | CIFAR-10 | .7047 | 2,304 | 43 | about 122,000 | Whitened PCA filters in both signs, linear discriminant filters by region in c2 and c3, ridge readout on images and flips |
+
+All four audits passed. All blocks of m1 were read. For m2, c1 and c2 we listed every loop and searched for banned words and found none, but did not read every line. Rule choices were made on training images only.
+
+Limits of this section:
+
+- **The PCA rival came after Opus.** It was written after reading c1's and c2's recipes, so it is not a blind rival. It got no tuning beyond one gain and one penalty.
+- **One reply of c2 was interrupted** by a session restart. The bench did not charge it, and the editor went on with what it had.
+- **Trained-on readings are incomplete.** We stopped c1's after one of three learning rates to finish, and c2 got none. m1 and m2 were trained on plain images, so nothing says how they compare with warped training.
+- **Machine load differs between rows.** Times for controls come from runs next to other jobs, and the first CIFAR-10 settings ran alone for part of the time.
+- **Two Opus runs per task.** The MNIST and CIFAR-10 gaps are per run and have no error bar across runs.
+- **No gradient-free rival was tried beyond these.** Extreme learning machines ([arXiv 1412.8307](https://arxiv.org/abs/1412.8307)) reach 98.72% on MNIST with 15,000 random units, a far wider network than ours.
+
 ## What an ICML reviewer will object to
 
 1. **This is program synthesis.** The weights only store a rule, and nothing needs a neural network. We agree; the claim is about what an LLM can write, and when in training it pays.
-2. **The tasks suit it.** Every task is two-part by construction, and a short rule exists. Random tables are the only tasks without one.
+2. **The tasks suit it.** Every task is two-part by construction, and a short rule exists. Random tables are the only tasks without one. Handwritten digits have no short rule, but they are small, and their 540 test images give a standard error near .006, so the .970, .976 and .980 readings cannot be told apart.
 3. **One Opus per task.** Sixteen tasks is a small count, and fresh Opus runs are not independent labs. Task is the unit in the standard error above.
 4. **A better rival might match Opus.** Co-clustering and the list script are quick, and neither is the best program synthesis method available. The next test should use one.
-5. **Frozen weights.** Training added at most .018 after Opus's change, so the comparison is between a written rule and training, not between training methods.
+5. **Frozen weights.** In the 18 no-training runs, training on from Opus's weights added .009 on average at its best reading and at most .044 (r39), and on noisy tasks its last reading fell by up to .412 (r47). So the comparison is mostly between a written rule and training, not between training methods.
 6. **Selection.** We screened 13 settings and added modes after seeing results. Each later rule was pushed before its test. Best training and Opus's best reading are both picked on held-out pairs, and first readings have no such selection for Opus.
 7. **Context leaks.** Editors ran as fresh agents, which may have received general context about this work. Transcripts were audited for other tool calls. Eleven runs show one extra call after the bench ended (r18, r30, r31, r34-r36, r38, r39, r46, r49, r50), which changes nothing.
 8. **Close to the ban.** Runs including r29, r34-r36, r43 and r47 used repeated discrete searches or vote passes over answer codes, r42 one-pass least squares, r41 SVD. These touch no weights against a loss. Word matches are flagged in each run's result row. r41's `__import__` only created a folder, and r44's `randint` only started a search.
 9. **Old idea.** Reading rules from networks is decades old, as the README's table shows. The Is this new? answer is narrow for that reason.
+
+10. **Famous datasets.** Opus knows MNIST and CIFAR-10 recipes from its training data, so these runs test recall as well as reasoning. Its recipes are close to PCANet and to polynomial classifiers from the 1990s.
+11. **Weak rivals.** Plain closed-form rivals are limited by our effort. With the PCA recipe added, Opus's CIFAR-10 margin fell from .057 to .068 down to .019 to .030.
+12. **Compute.** Counted in CPU seconds, Opus used more than training on CIFAR-10 and scored .16 lower, and its tokens are extra.
+13. **Selection in training's favour.** Best training picks its setting on the test set, which favours training. Opus never saw test images.
+14. **Augmentation.** m2 fitted on warped images while the first MNIST controls saw plain ones, so we added warped controls. They moved its gap from .0027 to .0077.
 
 Total cost of the 51 runs: 6,702,032 tokens, about 129,000 per run in the answers tests.
 

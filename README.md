@@ -5,6 +5,8 @@
 > [!IMPORTANT]
 > **Given every training answer and no training at all, Claude Opus 5.5 wrote weights that scored higher on unseen inputs than the best of 34 training settings at any step, on 14 of the 16 tasks that have a rule: mean +.080 (standard error .023). It lost the other two by .029 and .003.**
 >
+> **On CIFAR-10 the result does not hold: with no training Opus wrote 71.6% and best training reached 87.8%, and a plain known recipe reached 68.6%.** Those tasks have no short rule.
+>
 > Changing weights before or during training lost on all 4 kinds of task. Changing them after training helped at that step on 4 of 5 kinds, and the lead at the best reading was .02 or less. On 2 random tables with no rule, Opus said it found no rule.
 
 We are using this environment to write a paper for ICML 2027. It was built in [AI Research School](https://www.skool.com/become-ai-researcher-2669). The licence is MIT: you can use it for your own research without asking and without adding anyone as a co-author.
@@ -132,10 +134,41 @@ Opus computed one straight separating line for each pair of digits, 45 lines, fr
 
 ---
 
+## On full MNIST and CIFAR-10, training still wins clearly, and Opus's edge over a known recipe is small
+
+Digits have 540 test images, so a gap of .006 cannot be told from a tie. We repeated the test on the two standard benchmarks, each with 10,000 test images, on larger networks: a 669,706-weight fully connected network for MNIST and a 411,786-weight convolutional network for CIFAR-10. Opus wrote every weight with no gradients and no loop that improves against a loss, in two fresh runs per task. Each score below is the weights as written.
+
+| Method, CIFAR-10 | Correct on 10,000 test images | Cost |
+|---|---|---|
+| **Best training, best of 8 settings** | **.8776** | 11.5 minutes |
+| Opus run c1, no training | .7162 | 1,282 CPU seconds |
+| Opus run c2, no training | .7047 | 2,304 CPU seconds |
+| PCA filters in every layer, one solve, plain code | .6860 | 65 seconds |
+| Whitened image patches in the first layer, one solve | .6481 | 37 seconds |
+| Support vector machine on 10,000 images | .4710 | 253 seconds |
+
+| Method, MNIST | Correct on 10,000 test images |
+|---|---|
+| **Best training, with shifted, rotated and sheared images** | **.9921** |
+| Best training on plain images | .9871 |
+| Opus run m2, no training, fitted on shifted, rotated and sheared images | .9844 |
+| Opus run m1, no training, plain images | .9796 |
+| Support vector machine | .9792 |
+| Random weights at a tuned size, one solve, plain code | .9240 |
+| PCA filters in every layer, one solve, plain code | .8913 |
+
+> **Training beats Opus by .16 on CIFAR-10 and by .008 to .013 on MNIST. Opus used about two to three times the compute of one CIFAR-10 training run.**
+
+Both CIFAR-10 runs stacked whitened PCA filters and solved the last layer once, which is close to [PCANet](https://arxiv.org/abs/1404.3606). The same plain recipe, which I wrote after reading what Opus did, comes within .030 and .019 of Opus. Before these runs we wrote that a margin of .02 or less means the LLM adds nothing over a known recipe on this task. One run clears that line and one does not.
+
+Training on from c1's weights reached .8731, which is below best training, in the one reading that finished before we stopped.
+
+---
+
 ## Where it stops working
 
 > [!WARNING]
-> - **One Opus run per task, on a toy.** The network has 8,751 weights. Nothing here has been tried on a language model. The only natural data so far is one split of small handwritten digits.
+> - **One Opus run per task, on a toy.** The rule-task network has 8,751 weights. Nothing here has been tried on a language model. The natural data so far is small handwritten digits, MNIST and CIFAR-10, with two Opus runs each on the last two, and on CIFAR-10 training wins by .16.
 > - **Every task with a rule is two-part by construction.** Each answer depends on hidden values of a and b. Handwritten digits have no short rule, and there Opus used a known statistics method without beating training or that method as plain code.
 > - **Opus's short code does real work.** Some runs used repeated discrete searches, vote passes, one-pass least squares or SVD over the answers. These touch no weights against a loss. They were disclosed and not voided, and each run's code is in its ledger.
 > - **The search grew as results came in.** We screened 13 settings first and added modes after seeing them. Each later rule was pushed before its test, on tasks not used before. Peak readings of Opus and training are both picked on held-out pairs.
@@ -155,6 +188,8 @@ Not as a kind of result. Rules extracted from networks have beaten those network
 | KBANN (Towell and Shavlik, 1994) | A person writes the rules | **Yes**, then trains | Yes |
 | [Doshi et al., 2023](https://arxiv.org/abs/2310.13061) | A regularised network, on corrupted modular labels | No | Recovers the clean rule |
 | [Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/) (2026) | An LLM | **Yes**, finished or new networks | Trained networks, base models |
+| [NeuroGen](https://arxiv.org/abs/2505.12470) (2025) | An LLM tuned on checkpoints | **Yes** | Yes: 50% on CIFAR-10 against about 60%, on small networks |
+| [PCANet](https://arxiv.org/abs/1404.3606) (2014) and [ResCNet](https://arxiv.org/abs/2301.11663) (2023) | People write closed-form layers | Fixed filters, far larger networks | Up to 87.5% on CIFAR-10 with 937 layers |
 | This repository | An LLM, with no list of shapes | **Yes** | **34 settings, at four timings, with a rule written first** |
 
 The new part is narrow: this comparison of timings, with an LLM as the editor, and a rule written before each test.

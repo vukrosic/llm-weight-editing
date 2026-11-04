@@ -17,3 +17,7 @@ toy/search_test/
 toy/search_runs/*/state.pt
 toy/digit_runs/*/work/
 toy/digit_runs/*/state.pt
+toy/data/
+toy/bigger_runs/*/work/
+toy/bigger_runs/*/state.pt
+toy/data/
